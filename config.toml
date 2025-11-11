@@ -58,7 +58,6 @@ outcome_columns = [
   "ConfirmedCases",
   "ConfirmedDeaths",
   "PopulationVaccinated",
-  "MajorityVaccinated",
   "ContainmentHealthIndex",
   "GovernmentResponseIndex",
   "StringencyIndex",
@@ -68,7 +67,7 @@ outcome_columns = [
 
 # Optional metadata or derived indices to retain but not train on
 extra_columns = [
-
+    "MajorityVaccinated"
 ]
 
 [hparams]

@@ -90,34 +90,14 @@ class ModelIOPairBuilder:
 
     def _encode_policies(self, win: pd.DataFrame) -> Optional[np.ndarray]:
         # policies are 0/1 or missing; coerce safely first
-        arr_df = win[self.policy_cols].apply(pd.to_numeric, errors="coerce")
-        if self.policy_missing == "drop":
-            if arr_df.isna().any().any():
-                return None
-            return arr_df.to_numpy(dtype=float, copy=True)
-        if self.policy_missing == "zero":
-            arr = arr_df.to_numpy(dtype=float, copy=True)
-            np.nan_to_num(arr, copy=False, nan=0.0)
-            return arr
-        # "ffill_then_zero"
-        filled = arr_df.ffill()
-        arr = filled.to_numpy(dtype=float, copy=True)
-        np.nan_to_num(arr, copy=False, nan=0.0)
-        return arr
+        df = win[self.outcome_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0)
+        return df.to_numpy(dtype=float, copy=True)
 
     def _encode_outcomes(self, win: pd.DataFrame) -> Optional[np.ndarray]:
         # outcomes may contain strings like "NV" -> coerce to NaN first
-        arr_df = win[self.outcome_cols].apply(pd.to_numeric, errors="coerce")
-        if self.outcome_missing == "drop":
-            if arr_df.isna().any().any():
-                return None
-            return arr_df.to_numpy(dtype=float, copy=True)
-        # "ffill"
-        filled = arr_df.ffill()
-        if filled.isna().any().any():
-            return None
-        return filled.to_numpy(dtype=float, copy=True)
-
+        df = win[self.outcome_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0)
+        return df.to_numpy(dtype=float, copy=True)
+    
     def _build_inputs_from_window(self, hist: pd.DataFrame, end_date: pd.Timestamp) -> Optional[ModelInputs]:
         pol_hist = self._encode_policies(hist)
         if pol_hist is None:
@@ -176,14 +156,13 @@ class ModelIOPairBuilder:
 
         if self.verbose:
             total_skipped = sum(skips.values())
-            print(f"[ModelIOPairBuilder] Built {len(pairs)} pairs out of {len(pairs) + len(skips)} possible (skipped {total_skipped})")
+            print(f"[ModelIOPairBuilder] Built {len(pairs)} pairs (skipped {total_skipped})")
             for k, v in skips.items():
                 if v:
                     print(f"  - {k:>15}: {v}")
             print("")
 
         return pairs
-
 
 class OutcomePredictor:
     def __init__(self, model: PredictorModel):

@@ -19,30 +19,10 @@ def main():
     print("Policy columns (sample):", AnalysisConfig.metadata.policy_columns[:5])
     print("Outcome columns:", AnalysisConfig.metadata.outcome_columns)
     print()
-
-    # Test geo IDs
-    geo_series = all_data.geo_id_strings(True)
-    print("GeoID Sample")
-    print(geo_series)
-    print(f"Unique GeoIDs: {len(geo_series)}")
-    print()
-
-    # Test region split
-    print("Region split:")
-    splits = all_data.split_by_region(ratio=(0.8, 0.1, 0.1))
-    print(f"Train size: {len(splits.training)}, Test size: {len(splits.testing)}, Val size: {len(splits.validation) if splits.validation is not None else 0}")
-    print()
-
-    # Example: get one region's time series
-    first_geo = geo_series.dropna().unique()[0]
-    print(f"Timeseries for {first_geo}")
-    ts = all_data.get_timeseries(first_geo)
-    print(ts)
-
     
     # Build pairs (small sample)
     builder = ModelIOPairBuilder(window_size=14, horizon=1, max_per_geo=20,
-                                policy_missing="ffill_then_zero", outcome_missing="ffill", verbose=True)
+                                policy_missing="ffill_then_zero", outcome_missing="ffill_bfill", verbose=True)
     
     train_pairs = builder.get_pairs(all_data)
 
@@ -51,7 +31,7 @@ def main():
     model.fit_batch(train_pairs)
 
     predictor = OutcomePredictor(model)
-    metrics = predictor.evaluate(train_pairs[:200])  # quick sanity slice
+    metrics = predictor.evaluate(train_pairs[:2])  # quick sanity slice
     print(metrics)
 
 
