@@ -36,15 +36,35 @@ def _seg(name: str, val: Any) -> str:
     return f"{name}__{_value_fingerprint(val)}"
 
 
+SENTINEL_NAME = ".CACHE_ROOT"
+
 @dataclass
 class CacheConfig:
     root: Path
     compress: int = 3
     default_verbose: bool = True
+    require_subdir: bool = True  # safety: root must be inside project, not project root
 
     def __post_init__(self):
-        self.root = Path(self.root)
+        self.root = Path(self.root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
+
+        # SAFETY 1: refuse to use repository root as cache root
+        if self.require_subdir:
+            # Heuristic: project root has a .git folder and we shouldn't equal it
+            git_dir = None
+            cur = self.root
+            for parent in [cur] + list(cur.parents):
+                if (parent / ".git").exists():
+                    git_dir = parent
+                    break
+            if git_dir is not None and self.root == git_dir:
+                raise RuntimeError(f"Refusing to use repository root as cache root: {self.root}")
+
+        # SAFETY 2: write a sentinel file; invalidator will never delete above this
+        sentinel = self.root / SENTINEL_NAME
+        if not sentinel.exists():
+            sentinel.write_text("cache root sentinel\n", encoding="utf-8")
 
 
 class Cache:
@@ -154,42 +174,57 @@ class Cache:
 
     # invalidation via directory structure
     @classmethod
-    def invalidate_block(cls, block_name: str, *, cascade_up: bool = True) -> int:
+    def invalidate_block(cls, block_name: str, *, cascade_up: bool = False) -> int:
         """
-        Delete all directories named `block_name` anywhere under the cache root.
-        If cascade_up=True, also delete all ancestor directories up to the root for each match.
-        Returns the number of directories removed.
+        Delete directories named `block_name` ONLY within the cache root.
+        If cascade_up=True, delete ancestors up to (but NOT including) the cache root sentinel.
+        Returns number of directories removed.
         """
         self = cls.instance()
-        removed = 0
-        # find any path ".../<block_name>"
-        matches = list(self.cfg.root.rglob(block_name))
-        # Keep only directories, and only those living under root (avoid partial string collisions)
-        matches = [p for p in matches if p.is_dir() and self.cfg.root in p.parents]
+        root = self.cfg.root
+        sentinel = root / SENTINEL_NAME
+        if not sentinel.exists():
+            raise RuntimeError(
+                f"Cache sentinel missing at {sentinel}. Refusing to invalidate for safety."
+            )
 
-        # Sort deeper paths first to delete children before parents safely
-        matches.sort(key=lambda p: len(p.relative_to(self.cfg.root).parts), reverse=True)
+        removed = 0
+        matches = [p for p in root.rglob(block_name) if p.is_dir()]
+
+        # deepest-first
+        matches.sort(key=lambda p: len(p.relative_to(root).parts), reverse=True)
 
         seen: set[Path] = set()
         for p in matches:
-            # delete matched dir
+            # double-check p under root
+            try:
+                p.relative_to(root)
+            except ValueError:
+                # outside root — skip (shouldn't happen)
+                continue
+
+            # remove the matched block dir
             if p not in seen and p.exists():
                 shutil.rmtree(p, ignore_errors=True)
                 seen.add(p)
                 removed += 1
                 if self.cfg.default_verbose:
-                    print(f"[Cache] Invalidate: removed {p.relative_to(self.cfg.root)}")
+                    print(f"[Cache] Invalidate: removed {p.relative_to(root)}")
 
             if cascade_up:
-                # walk up to root, delete each ancestor dir (but not the root)
+                # walk up toward root; stop at sentinel
                 for ancestor in reversed(p.parents):
-                    if ancestor == self.cfg.root:
+                    if ancestor == root:
+                        break
+                    # stop if we found a sentinel at this ancestor
+                    if (ancestor / SENTINEL_NAME).exists():
                         break
                     if ancestor not in seen and ancestor.exists():
                         shutil.rmtree(ancestor, ignore_errors=True)
                         seen.add(ancestor)
                         removed += 1
                         if self.cfg.default_verbose:
-                            print(f"[Cache] Invalidate (cascade): removed {ancestor.relative_to(self.cfg.root)}")
+                            rel = ancestor.relative_to(root)
+                            print(f"[Cache] Invalidate (cascade): removed {rel}")
 
         return removed
