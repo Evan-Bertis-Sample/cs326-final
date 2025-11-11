@@ -3,6 +3,18 @@ from analysis.oxcgrt_data import OxCGRTData, GeoID
 
 from analysis.predict import OutcomePredictor, ModelIOPairBuilder
 from analysis.models.persistence_model import PersistenceModel
+from analysis.cache import Cache, CacheConfig
+
+from pathlib import Path
+
+def build_pairs(window : int, horizon : int, max_per_geo : str):
+    all_data = OxCGRTData(AnalysisConfig.paths.data)
+    # Build pairs (small sample)
+    builder = ModelIOPairBuilder(window_size=window, horizon=horizon, max_per_geo=max_per_geo,
+                                policy_missing="ffill_then_zero", outcome_missing="ffill_bfill", verbose=True)
+    
+    train_pairs = builder.get_pairs(all_data)
+    return train_pairs
 
 def main():
     # Load dataset
@@ -22,12 +34,15 @@ def main():
 
     countries = all_data.geo_id_strings(True)
     print(F"Number of geos: {len(countries)}")
-    
-    # Build pairs (small sample)
-    builder = ModelIOPairBuilder(window_size=14, horizon=1, max_per_geo=10,
-                                policy_missing="ffill_then_zero", outcome_missing="ffill_bfill", verbose=True)
-    
-    train_pairs = builder.get_pairs(all_data)
+
+    Cache.init(CacheConfig(root=Path("models/.cache"), compress=3, default_verbose=True))
+
+    Cache.Begin("build_pairs_all", ["window", "horizon", "max_per_geo"])
+    train_pairs = Cache.call(build_pairs, window=14, horizon=1, max_per_geo=None)
+    have_same = Cache.exists(build_pairs, window=14, horizon=1, cluster="ALL")
+
+    print(train_pairs, have_same)
+    Cache.End()
 
     # Train and evaluate persistence
     model = PersistenceModel()

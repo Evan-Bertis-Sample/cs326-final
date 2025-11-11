@@ -1,4 +1,3 @@
-# analysis/cache_joblib.py
 from __future__ import annotations
 import inspect
 from dataclasses import dataclass
@@ -54,7 +53,6 @@ class Cache:
         self.cfg = cfg
         self._stack = []
 
-    # lifecycle
     @classmethod
     def init(cls, cfg: CacheConfig) -> "Cache":
         cls._instance = Cache(cfg)
