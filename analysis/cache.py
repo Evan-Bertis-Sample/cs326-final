@@ -46,24 +46,6 @@ class CacheConfig:
         self.root = Path(self.root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
 
-        # SAFETY 1: refuse to use repository root as cache root
-        if self.require_subdir:
-            # Heuristic: project root has a .git folder and we shouldn't equal it
-            git_dir = None
-            cur = self.root
-            for parent in [cur] + list(cur.parents):
-                if (parent / ".git").exists():
-                    git_dir = parent
-                    break
-            if git_dir is not None and self.root == git_dir:
-                raise RuntimeError(f"Refusing to use repository root as cache root: {self.root}")
-
-        # SAFETY 2: write a sentinel file; invalidator will never delete above this
-        sentinel = self.root / SENTINEL_NAME
-        if not sentinel.exists():
-            sentinel.write_text("cache root sentinel\n", encoding="utf-8")
-
-
 class Cache:
     _instance: Optional["Cache"] = None
 
