@@ -24,7 +24,7 @@ def main():
     print(F"Number of geos: {len(countries)}")
     
     # Build pairs (small sample)
-    builder = ModelIOPairBuilder(window_size=14, horizon=1,
+    builder = ModelIOPairBuilder(window_size=14, horizon=1, max_per_geo=10,
                                 policy_missing="ffill_then_zero", outcome_missing="ffill_bfill", verbose=True)
     
     train_pairs = builder.get_pairs(all_data)

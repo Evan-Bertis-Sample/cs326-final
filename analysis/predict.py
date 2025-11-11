@@ -5,7 +5,7 @@ from typing import List, Tuple, Optional, Protocol
 import numpy as np
 import pandas as pd
 import hashlib
-
+import math
 from tqdm import tqdm
 
 from analysis.config import AnalysisConfig
@@ -143,7 +143,16 @@ class ModelIOPairBuilder:
             encoded_meta = self._encode_meta(geo_df)
 
             n = len(geo_df)
-            inner_iter = range(0, n - self.window - self.horizon + 1)
+
+            step_size = 1
+            if self.max_per_geo != None and self.max_per_geo > 0:
+                total_possible = n - self.window - self.horizon + 1
+                step_size = math.floor(total_possible / self.max_per_geo)
+        
+            if step_size <= 0:
+                step_size = 1
+
+            inner_iter = range(0, n - self.window - self.horizon + 1, step_size)
             if verbose:
                 inner_iter = tqdm(inner_iter, leave=False, desc=f"{geo_id[:10]}...", unit="window")
 
