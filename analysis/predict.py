@@ -49,94 +49,138 @@ class PredictorModel(Protocol):
 
 
 class ModelIOPairBuilder:
-    @staticmethod
-    def build_pairs(
-        data: OxCGRTData,
+    def __init__(
+        self,
         window_size: int,
         horizon: int = 1,
         max_per_geo: Optional[int] = None,
-    ) -> List[Tuple[ModelInputs, ModelOutput]]:
+        policy_missing: str = "ffill_then_zero",  # "ffill_then_zero" | "zero" | "drop"
+        outcome_missing: str = "ffill",           # "ffill" | "drop"
+        verbose: bool = True,
+    ):
+        self.window = window_size
+        self.horizon = horizon
+        self.max_per_geo = max_per_geo
+        self.policy_missing = policy_missing
+        self.outcome_missing = outcome_missing
+        self.verbose = verbose
+
         md = AnalysisConfig.metadata
-        date_col = md.date_column
-        geoid_col = getattr(md, "geo_id_column", "GeoID")
+        self.date_col = md.date_column
+        self.geoid_col = getattr(md, "geo_id_column", "GeoID")
+        self.policy_cols = md.policy_columns
+        self.outcome_cols = md.outcome_columns
 
-        df = data.data.copy()
-        if not pd.api.types.is_datetime64_any_dtype(df[date_col]):
-            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+    def _prepare_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        if not pd.api.types.is_datetime64_any_dtype(df[self.date_col]):
+            df = df.copy()
+            df[self.date_col] = pd.to_datetime(df[self.date_col], errors="coerce")
+        return df
 
-        def _coerce_window(frame: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
-            # Coerce to numeric, then ffill/bfill within the window
-            w = frame[cols].apply(pd.to_numeric, errors="coerce")
-            w = w.ffill().bfill()
-            return w
+    def _select_eval_indices(self, n_rows: int) -> List[int]:
+        start = self.window
+        stop = n_rows - self.horizon + 1
+        if stop <= start:
+            return []
+        if self.max_per_geo and self.max_per_geo > 0:
+            count = stop - start
+            take = min(self.max_per_geo, count)
+            return np.linspace(start, stop - 1, num=take, dtype=int).tolist()
+        return list(range(start, stop))
 
+    def _encode_policies(self, win: pd.DataFrame) -> Optional[np.ndarray]:
+        # policies are 0/1 or missing; coerce safely first
+        arr_df = win[self.policy_cols].apply(pd.to_numeric, errors="coerce")
+        if self.policy_missing == "drop":
+            if arr_df.isna().any().any():
+                return None
+            return arr_df.to_numpy(dtype=float, copy=True)
+        if self.policy_missing == "zero":
+            arr = arr_df.to_numpy(dtype=float, copy=True)
+            np.nan_to_num(arr, copy=False, nan=0.0)
+            return arr
+        # "ffill_then_zero"
+        filled = arr_df.ffill()
+        arr = filled.to_numpy(dtype=float, copy=True)
+        np.nan_to_num(arr, copy=False, nan=0.0)
+        return arr
+
+    def _encode_outcomes(self, win: pd.DataFrame) -> Optional[np.ndarray]:
+        # outcomes may contain strings like "NV" -> coerce to NaN first
+        arr_df = win[self.outcome_cols].apply(pd.to_numeric, errors="coerce")
+        if self.outcome_missing == "drop":
+            if arr_df.isna().any().any():
+                return None
+            return arr_df.to_numpy(dtype=float, copy=True)
+        # "ffill"
+        filled = arr_df.ffill()
+        if filled.isna().any().any():
+            return None
+        return filled.to_numpy(dtype=float, copy=True)
+
+    def _build_inputs_from_window(self, hist: pd.DataFrame, end_date: pd.Timestamp) -> Optional[ModelInputs]:
+        pol_hist = self._encode_policies(hist)
+        if pol_hist is None:
+            return None
+        out_hist = self._encode_outcomes(hist)
+        if out_hist is None:
+            return None
+        meta_vec = np.zeros((0,), dtype=float)
+        return ModelInputs(meta=meta_vec, policy_history=pol_hist, outcome_history=out_hist, end_date=end_date, horizon=self.horizon)
+
+    def _build_target_row(self, gdf: pd.DataFrame, pred_date: pd.Timestamp) -> Optional[ModelOutput]:
+        tgt = gdf[gdf[self.date_col] == pred_date]
+        if tgt.empty:
+            return None
+        y = tgt[self.outcome_cols].to_numpy(dtype=float).reshape(-1)
+        if np.isnan(y).any():
+            return None
+        return ModelOutput(pred_date=pred_date, outcomes=y)
+
+    def _build_pair_for_index(self, gdf: pd.DataFrame, i: int) -> Optional[Tuple[ModelInputs, ModelOutput]]:
+        end_date = pd.to_datetime(gdf.iloc[i - 1][self.date_col])
+        pred_date = end_date + pd.Timedelta(days=self.horizon)
+        hist = gdf.iloc[i - self.window : i]
+        xin = self._build_inputs_from_window(hist, end_date)
+        if xin is None:
+            return None
+        yout = self._build_target_row(gdf, pred_date)
+        if yout is None:
+            return None
+        return (xin, yout)
+
+    def get_pairs(self, data: OxCGRTData) -> List[Tuple[ModelInputs, ModelOutput]]:
+        df = self._prepare_df(data.data.copy())
         pairs: List[Tuple[ModelInputs, ModelOutput]] = []
+        skips: Dict[str, int] = {"too_short": 0, "missing_target": 0, "bad_policy": 0, "bad_outcome": 0}
 
-        for geo, gdf in df.groupby(geoid_col):
-            gdf = gdf.sort_values(date_col).reset_index(drop=True)
-            if len(gdf) <= window_size + horizon:
+        for _, gdf in df.groupby(self.geoid_col):
+            gdf = gdf.sort_values(self.date_col).reset_index(drop=True)
+            idxs = self._select_eval_indices(len(gdf))
+            if not idxs:
+                skips["too_short"] += 1
                 continue
 
-            # candidate indices where target exists at t + horizon
-            start = window_size
-            stop = len(gdf) - horizon + 1
-            if max_per_geo and max_per_geo > 0:
-                idxs = np.linspace(
-                    start, stop - 1, num=min(max_per_geo, stop - start), dtype=int
-                )
-            else:
-                idxs = range(start, stop)
-
             for i in idxs:
-                end_date = pd.to_datetime(gdf.iloc[i - 1][date_col])
-                pred_date = end_date + pd.Timedelta(days=horizon)
-
-                tgt_row = gdf[gdf[date_col] == pred_date]
-                if tgt_row.empty:
+                pair = self._build_pair_for_index(gdf, i)
+                if pair is None:
+                    hist = gdf.iloc[i - self.window : i]
+                    if self._encode_policies(hist) is None:
+                        skips["bad_policy"] += 1
+                    elif self._encode_outcomes(hist) is None:
+                        skips["bad_outcome"] += 1
+                    else:
+                        skips["missing_target"] += 1
                     continue
+                pairs.append(pair)
 
-                hist = gdf.iloc[i - window_size : i]
-
-                # Coerce numeric windows
-                pol_win = _coerce_window(hist, md.policy_columns)
-                out_win = _coerce_window(hist, md.outcome_columns)
-
-                # If after ffill/bfill the window still has NaNs, skip
-                if pol_win.isna().any().any() or out_win.isna().any().any():
-                    continue
-
-                # Target vector (coerce once)
-                y = (
-                    tgt_row[md.outcome_columns]
-                    .apply(pd.to_numeric, errors="coerce")
-                    .iloc[0]
-                    .to_numpy(dtype=float)
-                )
-                if np.isnan(y).any():
-                    continue
-
-                # Meta (optional, numeric only)
-                meta_cols = getattr(md, "extra_columns", [])
-                if meta_cols:
-                    meta_series = hist[meta_cols].iloc[-1]
-                    meta_vec = pd.to_numeric(meta_series, errors="coerce").to_numpy(
-                        dtype=float
-                    )
-                    # if all NaN, drop meta
-                    if np.isnan(meta_vec).all():
-                        meta_vec = np.zeros((0,), dtype=float)
-                else:
-                    meta_vec = np.zeros((0,), dtype=float)
-
-                xin = ModelInputs(
-                    meta=meta_vec,
-                    policy_history=pol_win.to_numpy(dtype=float),
-                    outcome_history=out_win.to_numpy(dtype=float),
-                    end_date=end_date,
-                    horizon=horizon,
-                )
-                yout = ModelOutput(pred_date=pred_date, outcomes=y)
-                pairs.append((xin, yout))
+        if self.verbose:
+            total_skipped = sum(skips.values())
+            print(f"[ModelIOPairBuilder] Built {len(pairs)} pairs out of {len(pairs) + len(skips)} possible (skipped {total_skipped})")
+            for k, v in skips.items():
+                if v:
+                    print(f"  - {k:>15}: {v}")
+            print("")
 
         return pairs
 

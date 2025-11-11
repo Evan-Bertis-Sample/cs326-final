@@ -41,7 +41,10 @@ def main():
 
     
     # Build pairs (small sample)
-    train_pairs = ModelIOPairBuilder.build_pairs(all_data, window_size=14, horizon=1, max_per_geo=20)
+    builder = ModelIOPairBuilder(window_size=14, horizon=1, max_per_geo=20,
+                                policy_missing="ffill_then_zero", outcome_missing="ffill", verbose=True)
+    
+    train_pairs = builder.get_pairs(all_data)
 
     # Train and evaluate persistence
     model = PersistenceModel()
