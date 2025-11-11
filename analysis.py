@@ -6,6 +6,16 @@ from analysis.models.persistence_model import PersistenceModel
 from analysis.cache import Cache, CacheConfig
 
 from pathlib import Path
+import argparse
+
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument("--invalidate", nargs="*", default=[],
+                   help="Block names to invalidate (e.g., build_pairs training)")
+    p.add_argument("--no-cascade", action="store_true",
+                   help="Do not cascade invalidation to parent directories")
+    return p.parse_args()
+
 
 def build_pairs(window : int, horizon : int, max_per_geo : str):
     all_data = OxCGRTData(AnalysisConfig.paths.data)
@@ -17,6 +27,16 @@ def build_pairs(window : int, horizon : int, max_per_geo : str):
     return train_pairs
 
 def main():
+    args = parse_args()
+
+    # init cache
+    cache_root = Path(AnalysisConfig.paths.output) / ".cache"
+    Cache.init(CacheConfig(root=cache_root, compress=3, default_verbose=True))
+
+    # apply invalidations before any work
+    for blk in args.invalidate:
+        Cache.invalidate_block(blk, cascade_up=(not args.no_cascade))
+
     # Load dataset
     all_data = OxCGRTData(AnalysisConfig.paths.data)
 
@@ -34,14 +54,23 @@ def main():
 
     countries = all_data.geo_id_strings(True)
     print(F"Number of geos: {len(countries)}")
+    
+    Cache.Begin("training")
 
-    Cache.init(CacheConfig(root=Path("models/.cache"), compress=3, default_verbose=True))
-
-    Cache.Begin("build_pairs_all", ["window", "horizon", "max_per_geo"])
-    train_pairs = Cache.call(build_pairs, window=14, horizon=1, max_per_geo=None)
+    Cache.Begin("build_pairs_all")
+    train_pairs = Cache.call(build_pairs, window=14, horizon=1, max_per_geo=1)
     have_same = Cache.exists(build_pairs, window=14, horizon=1, cluster="ALL")
 
-    print(train_pairs, have_same)
+    # print(train_pairs, have_same)
+    Cache.End()
+
+    Cache.Begin("build_pairs_sub")
+    train_pairs = Cache.call(build_pairs, window=1, horizon=1, max_per_geo=1)
+    have_same = Cache.exists(build_pairs, window=1, horizon=1, cluster="ALL")
+
+    # print(train_pairs, have_same)
+
+
     Cache.End()
 
     # Train and evaluate persistence
