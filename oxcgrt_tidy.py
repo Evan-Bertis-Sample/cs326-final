@@ -243,10 +243,11 @@ def main():
 
     # Quick summary
     n_places = compact_df[IDENTITY_COLS].drop_duplicates().shape[0]
+    n_countries = compact_df["CountryName"].drop_duplicates().shape[0]
     n_rows = len(compact_df)
     min_date = compact_df[args.date_col].min()
     max_date = compact_df[args.date_col].max()
-    log(f"Done. Rows: {n_rows:,} | Unique places: {n_places:,} | Dates: {min_date.date()} → {max_date.date()}", args.quiet)
+    log(f"Done. Rows: {n_rows:,} | Unique Countries {n_countries:,} | Unique places: {n_places:,} | Dates: {min_date.date()} → {max_date.date()}", args.quiet)
 
 
 if __name__ == "__main__":
