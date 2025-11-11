@@ -11,9 +11,13 @@ import argparse
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--invalidate", nargs="*", default=[],
-                   help="Block names to invalidate (e.g., build_pairs training)")
-    p.add_argument("--no-cascade", action="store_true",
-                   help="Do not cascade invalidation to parent directories")
+                help="Block names to invalidate inside the cache.")
+    p.add_argument("--no-cascade-up", action="store_true",
+                help="Delete the top-most directory per match (removes whole subtree).")
+    p.add_argument("--force", action="store_true",
+                help="Skip confirmation prompt.")
+    p.add_argument("--print-only", action="store_true",
+                help="Show chains and targets without deleting.")
     return p.parse_args()
 
 
@@ -35,7 +39,12 @@ def main():
 
     # apply invalidations before any work
     for blk in args.invalidate:
-        Cache.invalidate_block(blk, cascade_up=(not args.no_cascade))
+        Cache.invalidate_block(
+            blk,
+            cascade_up=not args.no_cascade_up,
+            force=args.force,
+            print_only=args.print_only,
+        )
 
     # Load dataset
     all_data = OxCGRTData(AnalysisConfig.paths.data)
