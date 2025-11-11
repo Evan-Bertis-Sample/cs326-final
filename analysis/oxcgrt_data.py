@@ -128,7 +128,11 @@ class OxCGRTData:
         return GeoID.from_dataframe(self.data, unique=unique)
 
     def geo_id_strings(self, unique=False) -> pd.Series:
-        return GeoID.to_string_series(self.geo_ids(unique=False), index=self.data.index)
+        index = None
+        if unique is False:
+            index = self.data.index
+
+        return GeoID.to_string_series(self.geo_ids(unique=unique), index=index)
 
     def _ensure_datetime(self, df: pd.DataFrame) -> pd.DataFrame:
         dc = self.date_col
