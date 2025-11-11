@@ -1,5 +1,6 @@
 from analysis.config import AnalysisConfig
 from analysis.oxcgrt_data import OxCGRTData, GeoID
+from analysis.outcome_predictor import OutcomePredictor, PredictorModel, ModelInputs, ModelOutput, PersistenceModel
 
 
 def main():
@@ -36,6 +37,41 @@ def main():
     print(f"Timeseries for {first_geo}")
     ts = all_data.get_timeseries(first_geo)
     print(ts)
+
+    window = 14
+    horizon = 1
+
+    predictor = OutcomePredictor(PersistenceModel())
+    predictor.fit(splits.training, window=window, horizon=horizon)
+
+    # Evaluate on test split
+    scores = predictor.evaluate(splits.testing, window=window, horizon=horizon, max_steps_per_geo=25)
+    print("Test metrics:", scores)
+    print()
+
+    # Single-region prediction demo (choose a geo that exists in the test set)
+    test_geoids = splits.testing[getattr(AnalysisConfig.metadata, "geo_id_column", "GeoID")].astype("string").dropna().unique()
+    if len(test_geoids) == 0:
+        print("No GeoIDs in test split.")
+        return
+
+    demo_geo = test_geoids[0]
+    demo_ts = all_data.get_timeseries(demo_geo)
+    if demo_ts.empty:
+        print(f"No timeseries for {demo_geo}")
+        return
+
+    end_date = pd.to_datetime(demo_ts[AnalysisConfig.metadata.date_column]).max() - pd.Timedelta(days=horizon)
+    q = PredictionQuery(
+        data=all_data,
+        geo_ids=[demo_geo],
+        end_date=end_date,
+        window=window,
+        horizon=horizon,
+    )
+    yhat = predictor.predict_one(all_data, demo_geo, end_date=end_date, window=window, horizon=horizon)
+    print(f"Prediction for {demo_geo} on {end_date + pd.Timedelta(days=horizon)}:")
+    print(yhat)
 
 
 if __name__ == "__main__":
