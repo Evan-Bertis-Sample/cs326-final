@@ -4,6 +4,9 @@ from dataclasses import dataclass
 from typing import List, Tuple, Optional, Protocol
 import numpy as np
 import pandas as pd
+import hashlib
+
+from tqdm import tqdm
 
 from analysis.config import AnalysisConfig
 from analysis.oxcgrt_data import OxCGRTData
@@ -64,103 +67,111 @@ class ModelIOPairBuilder:
         self.policy_missing = policy_missing
         self.outcome_missing = outcome_missing
         self.verbose = verbose
+        
+    def _to_num(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.apply(pd.to_numeric, errors="coerce")
 
-        md = AnalysisConfig.metadata
-        self.date_col = md.date_column
-        self.geoid_col = getattr(md, "geo_id_column", "GeoID")
-        self.policy_cols = md.policy_columns
-        self.outcome_cols = md.outcome_columns
+    def _hash_str(self, s: str) -> float:
+        # stable-ish numeric embed for metadata strings
+        if s is None:
+            return 0.0
+        h = hashlib.sha256(str(s).encode("utf-8")).hexdigest()
+        return float(int(h[:12], 16))  # compact to float range
 
-    def _prepare_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        if not pd.api.types.is_datetime64_any_dtype(df[self.date_col]):
+
+    def _date_to_ordinal(self, d: pd.Series) -> np.ndarray:
+        d = pd.to_datetime(d, errors="coerce")
+        return d.dt.date.map(lambda x: x.toordinal() if pd.notna(x) else 0).to_numpy(dtype=float)
+
+
+    def _ensure_dt(self, df: pd.DataFrame, col: str) -> pd.DataFrame:
+        if not pd.api.types.is_datetime64_any_dtype(df[col]):
             df = df.copy()
-            df[self.date_col] = pd.to_datetime(df[self.date_col], errors="coerce")
+            df[col] = pd.to_datetime(df[col], errors="coerce")
         return df
 
-    def _select_eval_indices(self, n_rows: int) -> List[int]:
-        start = self.window
-        stop = n_rows - self.horizon + 1
-        if stop <= start:
-            return []
-        if self.max_per_geo and self.max_per_geo > 0:
-            count = stop - start
-            take = min(self.max_per_geo, count)
-            return np.linspace(start, stop - 1, num=take, dtype=int).tolist()
-        return list(range(start, stop))
 
-    def _encode_policies(self, win: pd.DataFrame) -> Optional[np.ndarray]:
-        # policies are 0/1 or missing; coerce safely first
-        df = win[self.outcome_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0)
-        return df.to_numpy(dtype=float, copy=True)
+    def _encode_meta(self, df: pd.DataFrame) -> np.ndarray:
+        # one numeric vector per-geo using first non-null value per metadata column
+        cols = AnalysisConfig.metadata.id_columns
+        first_row = df.iloc[0][cols]
+        out = []
+        for c in cols:
+            v = first_row.get(c, None)
+            # If looks like a date column, encode ordinal; else hash string
+            if c == AnalysisConfig.metadata.date_column:
+                out.append(self._date_to_ordinal(pd.Series([v]))[0])
+            else:
+                out.append(self._hash_str("" if pd.isna(v) else str(v)))
+        return np.asarray(out, dtype=float)
 
-    def _encode_outcomes(self, win: pd.DataFrame) -> Optional[np.ndarray]:
-        # outcomes may contain strings like "NV" -> coerce to NaN first
-        df = win[self.outcome_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0)
-        return df.to_numpy(dtype=float, copy=True)
-    
-    def _build_inputs_from_window(self, hist: pd.DataFrame, end_date: pd.Timestamp) -> Optional[ModelInputs]:
-        pol_hist = self._encode_policies(hist)
-        if pol_hist is None:
-            return None
-        out_hist = self._encode_outcomes(hist)
-        if out_hist is None:
-            return None
-        meta_vec = np.zeros((0,), dtype=float)
-        return ModelInputs(meta=meta_vec, policy_history=pol_hist, outcome_history=out_hist, end_date=end_date, horizon=self.horizon)
 
-    def _build_target_row(self, gdf: pd.DataFrame, pred_date: pd.Timestamp) -> Optional[ModelOutput]:
-        tgt = gdf[gdf[self.date_col] == pred_date]
-        if tgt.empty:
-            return None
-        y = tgt[self.outcome_cols].to_numpy(dtype=float).reshape(-1)
-        if np.isnan(y).any():
-            return None
-        return ModelOutput(pred_date=pred_date, outcomes=y)
+    def _encode_policies(self, df: pd.DataFrame, start: int, end: int) -> np.ndarray:
+        cols = AnalysisConfig.metadata.policy_columns
+        date_col = AnalysisConfig.metadata.date_column
+        win = df.iloc[start:end].copy()
+        # keep only policy columns (numeric 0/1, missing→0)
+        pol = self._to_num(win[cols]).fillna(0.0).to_numpy(dtype=float)
+        return pol  # shape (W, P)
 
-    def _build_pair_for_index(self, gdf: pd.DataFrame, i: int) -> Optional[Tuple[ModelInputs, ModelOutput]]:
-        end_date = pd.to_datetime(gdf.iloc[i - 1][self.date_col])
-        pred_date = end_date + pd.Timedelta(days=self.horizon)
-        hist = gdf.iloc[i - self.window : i]
-        xin = self._build_inputs_from_window(hist, end_date)
-        if xin is None:
-            return None
-        yout = self._build_target_row(gdf, pred_date)
-        if yout is None:
-            return None
-        return (xin, yout)
 
-    def get_pairs(self, data: OxCGRTData) -> List[Tuple[ModelInputs, ModelOutput]]:
-        df = self._prepare_df(data.data.copy())
+    def _encode_outcomes(self, df: pd.DataFrame, start: int, end: int) -> np.ndarray:
+        cols = AnalysisConfig.metadata.outcome_columns
+        date_col = AnalysisConfig.metadata.date_column
+        win = df.iloc[start:end].copy()
+
+        out = self._to_num(win[cols]).fillna(0.0).to_numpy(dtype=float)
+
+        assert out.shape[0] == (end - start)
+        return out  # shape (W, O)
+
+
+    def get_pairs(self, data: OxCGRTData, verbose: bool = True) -> List[Tuple[ModelInputs, ModelOutput]]:
         pairs: List[Tuple[ModelInputs, ModelOutput]] = []
-        skips: Dict[str, int] = {"too_short": 0, "missing_target": 0, "bad_policy": 0, "bad_outcome": 0}
 
-        for _, gdf in df.groupby(self.geoid_col):
-            gdf = gdf.sort_values(self.date_col).reset_index(drop=True)
-            idxs = self._select_eval_indices(len(gdf))
-            if not idxs:
-                skips["too_short"] += 1
+        md = AnalysisConfig.metadata
+        date_col = md.date_column
+
+        geo_ids = data.geo_id_strings(unique=True)
+        geo_iter = tqdm(geo_ids, desc="Building training pairs", unit="region") if verbose else geo_ids
+
+        for geo_id in geo_iter:
+            geo_df = data.get_timeseries(str(geo_id))
+            if geo_df.empty:
                 continue
+            geo_df = self._ensure_dt(geo_df, date_col).sort_values(date_col).reset_index(drop=True)
+            encoded_meta = self._encode_meta(geo_df)
 
-            for i in idxs:
-                pair = self._build_pair_for_index(gdf, i)
-                if pair is None:
-                    hist = gdf.iloc[i - self.window : i]
-                    if self._encode_policies(hist) is None:
-                        skips["bad_policy"] += 1
-                    elif self._encode_outcomes(hist) is None:
-                        skips["bad_outcome"] += 1
-                    else:
-                        skips["missing_target"] += 1
+            n = len(geo_df)
+            inner_iter = range(0, n - self.window - self.horizon + 1)
+            if verbose:
+                inner_iter = tqdm(inner_iter, leave=False, desc=f"{geo_id[:10]}...", unit="window")
+
+            for i in inner_iter:
+                start, end = i, i + self.window
+                policy_history = self._encode_policies(geo_df, start, end)
+                outcome_history = self._encode_outcomes(geo_df, start, end)
+
+                end_date = pd.to_datetime(geo_df.iloc[end - 1][date_col])
+                pred_date = end_date + pd.Timedelta(days=self.horizon)
+
+                tgt_row = geo_df.loc[geo_df[date_col] == pred_date]
+                if tgt_row.empty:
                     continue
-                pairs.append(pair)
+                y = self._to_num(tgt_row[md.outcome_columns]).fillna(0.0).iloc[0].to_numpy(dtype=float)
 
-        if self.verbose:
-            total_skipped = sum(skips.values())
-            print(f"[ModelIOPairBuilder] Built {len(pairs)} pairs (skipped {total_skipped})")
-            for k, v in skips.items():
-                if v:
-                    print(f"  - {k:>15}: {v}")
-            print("")
+                xin = ModelInputs(
+                    meta=encoded_meta,
+                    policy_history=policy_history,
+                    outcome_history=outcome_history,
+                    end_date=end_date,
+                    horizon=self.horizon,
+                )
+                yout = ModelOutput(pred_date=pred_date, outcomes=y)
+                pairs.append((xin, yout))
+
+        if verbose:
+            tqdm.write(f"Finished building {len(pairs):,} training pairs.")
 
         return pairs
 

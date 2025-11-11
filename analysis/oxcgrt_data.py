@@ -180,9 +180,11 @@ class OxCGRTData:
             df = df[list(columns)]
         return OxCGRTData(df)
 
-    def get_timeseries(self, geo_id: str) -> pd.DataFrame:
-        target = GeoID.from_strings([geo_id], unique=True)[0]
-        df = self.data.loc[self.data[self.geoid_col] == str(target)]
+    def get_timeseries(self, geo_id: Union[str, GeoID]) -> pd.DataFrame:
+        # make sure that geoid is a string
+        target = str(geo_id)
+        
+        df = self.data.loc[self.data[self.geoid_col] == target]
         df = self._ensure_datetime(df)
         return df.sort_values(self.date_col)
 

@@ -19,9 +19,12 @@ def main():
     print("Policy columns (sample):", AnalysisConfig.metadata.policy_columns[:5])
     print("Outcome columns:", AnalysisConfig.metadata.outcome_columns)
     print()
+
+    countries = all_data.geo_id_strings(True)
+    print(F"Number of geos: {len(countries)}")
     
     # Build pairs (small sample)
-    builder = ModelIOPairBuilder(window_size=14, horizon=1, max_per_geo=20,
+    builder = ModelIOPairBuilder(window_size=14, horizon=1,
                                 policy_missing="ffill_then_zero", outcome_missing="ffill_bfill", verbose=True)
     
     train_pairs = builder.get_pairs(all_data)
