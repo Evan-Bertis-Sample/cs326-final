@@ -35,9 +35,6 @@ def _value_fingerprint(v: Any) -> str:
 def _seg(name: str, val: Any) -> str:
     return f"{name}__{_value_fingerprint(val)}"
 
-
-SENTINEL_NAME = ".CACHE_ROOT"
-
 @dataclass
 class CacheConfig:
     root: Path
@@ -119,11 +116,6 @@ class Cache:
         return self._stack[-1][1]
 
     def _entry_path(self, func: Any, bound: Dict[str, Any]) -> Tuple[Path, Path]:
-        """
-        Layout:
-          <root>/<block1>/<block2>/.../<func_name>/<arg1__v>/<arg2__v>/.../<last_arg__v>.joblib
-        If no args: <func_name>/result.joblib
-        """
         base = self._current_block_dir()
         func_name = getattr(func, "__name__", "func")
         func_dir = base / func_name
@@ -172,59 +164,96 @@ class Cache:
         _, fp = self._entry_path(func, bound)
         return fp.exists()
 
-    # invalidation via directory structure
     @classmethod
-    def invalidate_block(cls, block_name: str, *, cascade_up: bool = False) -> int:
-        """
-        Delete directories named `block_name` ONLY within the cache root.
-        If cascade_up=True, delete ancestors up to (but NOT including) the cache root sentinel.
-        Returns number of directories removed.
-        """
+    def invalidate_block(
+        cls,
+        block_name: str,
+        *,
+        cascade_up: bool = False,
+        force: bool = False,
+        print_only: bool = False,
+    ) -> int:
         self = cls.instance()
-        root = self.cfg.root
-        sentinel = root / SENTINEL_NAME
-        if not sentinel.exists():
-            raise RuntimeError(
-                f"Cache sentinel missing at {sentinel}. Refusing to invalidate for safety."
-            )
+        root = self.cfg.root.resolve()
+        verbose = self.cfg.default_verbose
 
+        # 1) find block directories strictly under cache root
+        matches = []
+        for p in root.rglob(block_name):
+            if p.is_dir():
+                try:
+                    _ = p.resolve().relative_to(root)
+                except ValueError:
+                    continue  # skip anything outside root (paranoia)
+                matches.append(p.resolve())
+
+        if not matches:
+            if verbose:
+                print(f"[Cache] Invalidate: no '{block_name}' directories under {root}")
+            return 0
+
+        # build chain from each match up to the top-most child of cache root
+        def _chain_to_top_under_root(path: Path) -> list[Path]:
+            chain = [path]
+            cur = path
+            while True:
+                parent = cur.parent
+                # stop when parent is root; 'cur' is then the top-most child under root
+                if parent == root:
+                    break
+                # sanity: if we somehow climbed above root, stop
+                try:
+                    _ = parent.relative_to(root)
+                except ValueError:
+                    break
+                chain.append(parent)
+                cur = parent
+            return chain  # [match, ..., top-under-root]
+
+        chains = [_chain_to_top_under_root(p) for p in matches]
+
+        # print chains
+        print(f"[Cache] Invalidate '{block_name}' — found {len(chains)} match(es) under {root}:")
+        for ch in chains:
+            rel = [c.relative_to(root) for c in ch]
+            # show from leaf to top, e.g.: a/b/build_pairs -> a/b -> a
+            print("  - " + "  ->  ".join(str(x) for x in rel))
+
+        # choose deletion targets
+        if cascade_up:
+            # delete only the top-most directory for each chain
+            targets = {ch[-1] for ch in chains}  # set of Paths
+            mode = "cascade-up (delete top-most roots)"
+        else:
+            # delete each matched directory only
+            targets = {ch[0] for ch in chains}
+            mode = "non-cascading (delete matches only)"
+
+        # sort deepest-first (safer when overlapping paths exist)
+        targets_sorted = sorted(targets, key=lambda p: len(p.relative_to(root).parts), reverse=True)
+
+        print("\n[Cache] Deletion mode:", mode)
+        print("[Cache] Targets:")
+        for t in targets_sorted:
+            print("   •", t.relative_to(root))
+
+        if print_only:
+            print("\n[Cache] print_only=True — no deletion performed.")
+            return 0
+
+        if not force:
+            resp = input("\nDelete the cache? (y/n) ").strip().lower()
+            if not (resp == "y" or resp == "yes"):
+                print("[Cache] Aborted. No deletion performed.")
+                return 0
+
+        # delete
         removed = 0
-        matches = [p for p in root.rglob(block_name) if p.is_dir()]
-
-        # deepest-first
-        matches.sort(key=lambda p: len(p.relative_to(root).parts), reverse=True)
-
-        seen: set[Path] = set()
-        for p in matches:
-            # double-check p under root
-            try:
-                p.relative_to(root)
-            except ValueError:
-                # outside root — skip (shouldn't happen)
-                continue
-
-            # remove the matched block dir
-            if p not in seen and p.exists():
-                shutil.rmtree(p, ignore_errors=True)
-                seen.add(p)
+        for t in targets_sorted:
+            if t.exists():
+                shutil.rmtree(t, ignore_errors=True)
                 removed += 1
-                if self.cfg.default_verbose:
-                    print(f"[Cache] Invalidate: removed {p.relative_to(root)}")
-
-            if cascade_up:
-                # walk up toward root; stop at sentinel
-                for ancestor in reversed(p.parents):
-                    if ancestor == root:
-                        break
-                    # stop if we found a sentinel at this ancestor
-                    if (ancestor / SENTINEL_NAME).exists():
-                        break
-                    if ancestor not in seen and ancestor.exists():
-                        shutil.rmtree(ancestor, ignore_errors=True)
-                        seen.add(ancestor)
-                        removed += 1
-                        if self.cfg.default_verbose:
-                            rel = ancestor.relative_to(root)
-                            print(f"[Cache] Invalidate (cascade): removed {rel}")
+                if verbose:
+                    print(f"[Cache] Removed: {t.relative_to(root)}")
 
         return removed
