@@ -35,7 +35,7 @@ def main():
     first_geo = geo_series.dropna().unique()[0]
     print(f"Timeseries for {first_geo}")
     ts = all_data.get_timeseries(first_geo)
-    print(ts.head())
+    print(ts)
 
 
 if __name__ == "__main__":

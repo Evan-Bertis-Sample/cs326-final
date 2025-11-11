@@ -108,7 +108,9 @@ class OxCGRTData:
             self.data = data.copy()
         else:
             raise TypeError("data must be a CSV path or a pandas DataFrame")
+
         self._ensure_required_columns()
+        self._attach_geoid_column()
 
     @staticmethod
     def required_columns() -> Set[str]:
@@ -124,15 +126,16 @@ class OxCGRTData:
     def date_col(self) -> str:
         return AnalysisConfig.metadata.date_column
 
-    def geo_ids(self, unique=False) -> List[GeoID]:
-        return GeoID.from_dataframe(self.data, unique=unique)
+    @property
+    def geoid_col(self) -> str:
+        return getattr(AnalysisConfig.metadata, "geo_id_column", "GeoID")
 
-    def geo_id_strings(self, unique=False) -> pd.Series:
-        index = None
-        if unique is False:
-            index = self.data.index
-
-        return GeoID.to_string_series(self.geo_ids(unique=unique), index=index)
+    def _attach_geoid_column(self) -> None:
+        series = GeoID.to_string_series(
+            GeoID.from_dataframe(self.data, unique=False),
+            index=self.data.index,
+        )
+        self.data[self.geoid_col] = series
 
     def _ensure_datetime(self, df: pd.DataFrame) -> pd.DataFrame:
         dc = self.date_col
@@ -140,6 +143,19 @@ class OxCGRTData:
             df = df.copy()
             df[dc] = pd.to_datetime(df[dc], errors="coerce")
         return df
+
+    def geo_ids(self, unique: bool = False) -> List[GeoID]:
+        if not unique:
+            return GeoID.from_strings(self.data[self.geoid_col].tolist(), unique=False)
+        uniq_strings = pd.Series(self.data[self.geoid_col], dtype="string").dropna().drop_duplicates().tolist()
+        return GeoID.from_strings(uniq_strings, unique=True)
+
+    def geo_id_strings(self, unique: bool = False) -> pd.Series:
+        col = self.data[self.geoid_col].astype("string")
+        if not unique:
+            return col
+        s = col.dropna().drop_duplicates().reset_index(drop=True)
+        return s
 
     def filter(
         self,
@@ -151,10 +167,9 @@ class OxCGRTData:
     ) -> "OxCGRTData":
         df = self.data
         if geo_ids is not None:
-            target = GeoID.from_strings(geo_ids, unique=True)
-            target_set = GeoID.to_string_set(target)
-            s = self.geo_id_strings()
-            df = df[s.isin(target_set)]
+            targets = GeoID.from_strings(geo_ids, unique=True)
+            target_set = set(GeoID.to_strings(targets))
+            df = df[df[self.geoid_col].isin(target_set)]
         if date_range is not None:
             df = self._ensure_datetime(df)
             start, end = pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])
@@ -167,47 +182,58 @@ class OxCGRTData:
 
     def get_timeseries(self, geo_id: str) -> pd.DataFrame:
         target = GeoID.from_strings([geo_id], unique=True)[0]
-        s = self.geo_id_strings()
-        df = self.data.loc[s == str(target)]
+        df = self.data.loc[self.data[self.geoid_col] == str(target)]
         df = self._ensure_datetime(df)
         return df.sort_values(self.date_col)
 
     def cluster_regions(self, region_clusters: List[List[str]]) -> Dict[frozenset, pd.DataFrame]:
         out: Dict[frozenset, pd.DataFrame] = {}
-        s = self.geo_id_strings()
+        s = self.data[self.geoid_col].astype("string")
         for cluster in region_clusters:
             targets = GeoID.from_strings(cluster, unique=True)
-            keys = frozenset(GeoID.to_string_set(targets))
-            mask = s.isin(keys)
-            out[keys] = self.data.loc[mask].copy()
+            keys = frozenset(GeoID.to_strings(targets))
+            out[keys] = self.data.loc[s.isin(keys)].copy()
         return out
 
     def split_by_region(
         self,
         ratio: Union[float, Tuple[float, float, float]] = (0.7, 0.15, 0.15),
         seed: int = 1,
+        group_by: str = "geo",  # "geo" or "country"
     ) -> DataTuple:
-        s = self.geo_id_strings()
-        keys = pd.Index(pd.Series(s, dtype="string").dropna().unique().tolist())
-        rs = np.random.RandomState(seed)
-        perm = keys.to_numpy().copy()
-        rs.shuffle(perm)
         if isinstance(ratio, float):
             a, b, c = ratio, 0.0, 1.0 - ratio
         else:
             a, b, c = ratio
             if abs((a + b + c) - 1.0) > 1e-8:
                 raise ValueError("ratios must sum to 1")
+
+        if group_by == "geo":
+            keys_series = self.data[self.geoid_col].astype("string")
+        elif group_by == "country":
+            cc_key = getattr(AnalysisConfig.metadata, "country_code_key", "CountryCode")
+            cn_key = getattr(AnalysisConfig.metadata, "country_name_key", "CountryName")
+            col = cc_key if cc_key in self.data.columns else cn_key
+            keys_series = pd.Series(self.data[col], index=self.data.index).astype("string").str.strip()
+        else:
+            raise ValueError("group_by must be 'geo' or 'country'")
+
+        uniq = pd.unique(keys_series.dropna())
+        rs = np.random.RandomState(seed)
+        perm = uniq.copy()
+        rs.shuffle(perm)
+
         n = len(perm)
         na = int(round(a * n))
         nb = int(round(b * n))
         train_keys = set(perm[:na])
         val_keys = set(perm[na:na + nb])
         test_keys = set(perm[na + nb:])
+
         df = self.data
-        train_df = df[s.isin(train_keys)].copy()
-        val_df = df[s.isin(val_keys)].copy() if nb > 0 else None
-        test_df = df[s.isin(test_keys)].copy()
+        train_df = df[keys_series.isin(train_keys)].copy()
+        val_df = df[keys_series.isin(val_keys)].copy() if nb > 0 else None
+        test_df = df[keys_series.isin(test_keys)].copy()
         return DataTuple(training=train_df, testing=test_df, validation=val_df)
 
     def split_rows(
@@ -216,7 +242,6 @@ class OxCGRTData:
         seed: int = 1,
         shuffle: bool = True,
     ) -> DataTuple:
-        import numpy as np
         df = self.data
         idx = df.index.to_numpy()
         if shuffle:
