@@ -2,18 +2,22 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Mapping
 import inspect
 import shutil
 import enum
 import datetime as dt
+import json
 import os
+import hashlib
 
 import numpy as np
 import pandas as pd
 from joblib import dump, load
 
+
 def _bind_args(func: Any, *args, **kwargs) -> Dict[str, Any]:
+    """Best-effort binding of args/kwargs to a name->value mapping."""
     try:
         sig = inspect.signature(func)
         bound = sig.bind_partial(*args, **kwargs)
@@ -24,94 +28,69 @@ def _bind_args(func: Any, *args, **kwargs) -> Dict[str, Any]:
         d.update(kwargs)
         return d
 
-def _sanitize(s: str, maxlen: int = 64) -> str:
-    # filesystem-safe-ish: replace separators/spaces, strip, collapse repeats
-    s = s.strip().replace("\\", "/").replace(" ", "_")
+def _sanitize(s: str) -> str:
+    """Make string filesystem-friendly."""
+    s = str(s).strip().replace("\\", "/").replace(" ", "_")
     for ch in ["/", ":", "*", "?", "\"", "<", ">", "|"]:
         s = s.replace(ch, "_")
-    return (s or "none")[:maxlen]
+    return s or "none"
 
-def _relpath_best(p: Path) -> str:
-    p = p.resolve()
-    candidates = []
-    try:
-        candidates.append(p.relative_to(Path.cwd()))
-    except Exception:
-        pass
-    try:
-        candidates.append(p.relative_to(Path.home()))
-    except Exception:
-        pass
-    # pick the shortest textual representation
-    txts = [str(c) for c in candidates] + [str(p)]
-    return min(txts, key=len)
+def _sha10(s: str) -> str:
+    return hashlib.sha1(s.encode("utf-8")).hexdigest()[:10]
 
-def _value_fingerprint(v: Any) -> str:
-    # primitives
+def _shorten(seg: str, maxlen: int = 40) -> str:
+    seg = _sanitize(seg)
+    if len(seg) <= maxlen:
+        return seg
+    return f"{seg[: maxlen - 11]}__{_sha10(seg)}"
+
+def _canonicalize_value(v: Any) -> Any:
     if isinstance(v, (str, int, float, bool)) or v is None:
-        return _sanitize(str(v))
-    # numpy scalar
+        return v
     if isinstance(v, np.generic):
-        return _sanitize(str(v.item()))
-    # pathlib / pathlike
+        return v.item()
     if isinstance(v, (Path, os.PathLike)):
-        p = Path(v)
-        try:
-            # if it's a directory/file, prefer readable relative form
-            rel = _relpath_best(p)
-            return _sanitize(rel)
-        except Exception:
-            return _sanitize(str(p))
-    # datetime / date
+        return str(Path(v).resolve())
     if isinstance(v, (dt.datetime, dt.date)):
-        return _sanitize(v.isoformat())
-    # enum
+        return v.isoformat()
     if isinstance(v, enum.Enum):
-        return _sanitize(v.name)
-    # numpy arrays
+        return v.name
     if isinstance(v, np.ndarray):
-        return f"nd_{'x'.join(map(str, v.shape))}_{str(v.dtype)}"
-    # pandas
-    if isinstance(v, (pd.Series, pd.DataFrame)):
-        cols = getattr(v, "columns", None)
-        return f"pd_{len(v)}x{len(cols) if cols is not None else 1}"
-    # fallback: type tag
-    return _sanitize(type(v).__name__ + "_obj")
+        return {"__nd__": True, "shape": list(v.shape), "dtype": str(v.dtype)}
+    if isinstance(v, pd.Series):
+        return {"__pd_series__": True, "len": int(len(v))}
+    if isinstance(v, pd.DataFrame):
+        return {"__pd_df__": True, "shape": [int(v.shape[0]), int(v.shape[1])]}
+    if isinstance(v, (list, tuple)):
+        return [_canonicalize_value(x) for x in v]
+    if isinstance(v, dict):
+        return {str(k): _canonicalize_value(v[k]) for k in sorted(v.keys(), key=str)}
+    return {"__obj__": type(v).__name__}
 
-def _seg(name: str, val: Any) -> str:
-    return f"{_sanitize(name)}__{_value_fingerprint(val)}"
+def _fingerprint_args(bound_args: Mapping[str, Any]) -> tuple[str, dict]:
+    canon = {k: _canonicalize_value(v) for k, v in sorted(bound_args.items())}
+    ser = json.dumps(canon, sort_keys=True, separators=(",", ":"))
+    return _sha10(ser), canon
 
-
-def _flatten_args(obj: Any, prefix: str = "") -> dict[str, str]:
-    out = {}
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            out.update(_flatten_args(v, f"{prefix}{k}." if prefix else f"{k}."))
-    elif isinstance(obj, (list, tuple)):
-        for i, v in enumerate(obj):
-            out.update(_flatten_args(v, f"{prefix}{i}." if prefix else f"{i}."))
-    else:
-        out[prefix[:-1] if prefix.endswith(".") else prefix] = str(obj)
-    return out
 
 @dataclass
 class CacheConfig:
     root: Path
     compress: int = 3
     default_verbose: bool = True
-    require_subdir: bool = True  # safety: root must be inside project, not project root
 
     def __post_init__(self):
         self.root = Path(self.root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
+
 
 class Cache:
     _instance: Optional["Cache"] = None
 
     def __init__(self, cfg: CacheConfig):
         self.cfg = cfg
-        # stack of active block directories (absolute Paths) + verbosity per block
-        self._stack: List[Tuple[str, Path, bool]] = []  # (block_name, dir_path, verbose)
+        # stack: (block_name, dir_path, verbose)
+        self._stack: List[Tuple[str, Path, bool]] = []
 
     # lifecycle
     @classmethod
@@ -125,21 +104,19 @@ class Cache:
             raise RuntimeError("Cache not initialized. Call Cache.init(CacheConfig(...)) first.")
         return cls._instance
 
-    # Begin/End blocks
+    # blocks
     @classmethod
     def Begin(cls, block_name: str, *, verbose: Optional[bool] = None) -> None:
-        """
-        Open a new block directory nested under the current block (or root if none).
-        Example nesting: <root>/training/build_pairs/...
-        """
         self = cls.instance()
         parent_dir = self._stack[-1][1] if self._stack else self.cfg.root
-        block_dir = parent_dir / block_name
+        # keep block segment short
+        block_dir = parent_dir / _shorten(block_name)
         block_dir.mkdir(parents=True, exist_ok=True)
         v = self.cfg.default_verbose if verbose is None else bool(verbose)
         self._stack.append((block_name, block_dir, v))
         if v:
-            print(f"[Cache] Begin: {block_name}  -> {block_dir.relative_to(self.cfg.root)}")
+            rel = block_dir.relative_to(self.cfg.root)
+            print(f"[Cache] Begin: {block_name}  -> {rel}")
 
     @classmethod
     def End(cls) -> None:
@@ -148,48 +125,41 @@ class Cache:
             return
         name, p, v = self._stack.pop()
         if v:
-            print(f"[Cache] End:   {name}  <- {p.relative_to(self.cfg.root)}")
+            rel = p.relative_to(self.cfg.root)
+            print(f"[Cache] End:   {name}  <- {rel}")
 
-    # path building for a function call within the current block
+    # internals
     def _current_block_dir(self) -> Path:
-        if not self._stack:
-            return self.cfg.root
-        return self._stack[-1][1]
+        return self._stack[-1][1] if self._stack else self.cfg.root
 
     def _entry_path(self, func: Any, bound: Dict[str, Any]) -> Tuple[Path, Path]:
         base = self._current_block_dir()
         func_name = getattr(func, "__name__", "func")
-        func_dir = base / func_name
+        func_dir = base / _shorten(func_name)
         func_dir.mkdir(parents=True, exist_ok=True)
 
-        ordered = list(bound.keys()) 
-        segments = [_seg(n, bound[n]) for n in ordered]
+        h, canon = _fingerprint_args(bound)
+        args_dir = func_dir / f"args__{h}"
+        args_dir.mkdir(parents=True, exist_ok=True)
 
-        if not segments:
-            dir_path = func_dir
-            file_path = dir_path / "result.joblib"
-            return dir_path, file_path
+        # sidecar
+        args_json = args_dir / "args.json"
+        if not args_json.exists():
+            try:
+                args_json.write_text(json.dumps(canon, indent=2, sort_keys=True), encoding="utf-8")
+            except Exception:
+                # sidecar is best-effort
+                pass
 
-        *dir_segs, last = segments
-        dir_path = func_dir
-        for seg in dir_segs:
-            dir_path = dir_path / seg
-        dir_path.mkdir(parents=True, exist_ok=True)
-        file_path = dir_path / f"{last}.joblib"
-        return dir_path, file_path
+        file_path = args_dir / "result.joblib"
+        return args_dir, file_path
 
     # public API
     @classmethod
     def call(cls, func: Any, *args, **kwargs) -> Any:
         self = cls.instance()
-        flat_kwargs = {}
-        for k, v in kwargs.items():
-            if isinstance(v, (dict, list, tuple)):
-                flat_kwargs.update({f"{k}_{kk}": vv for kk, vv in _flatten_args(v).items()})
-            else:
-                flat_kwargs[k] = v
 
-        bound = _bind_args(func, *args, **flat_kwargs)
+        bound = _bind_args(func, *args, **kwargs)
         _, fp = self._entry_path(func, bound)
 
         verbose = self._stack[-1][2] if self._stack else self.cfg.default_verbose
@@ -199,7 +169,7 @@ class Cache:
                 print(f"[Cache] Hit:  {fp.relative_to(self.cfg.root)}")
             return out
 
-        out = func(*args, **kwargs)  # original kwargs to function
+        out = func(*args, **kwargs)
         dump(out, fp, compress=self.cfg.compress)
         if verbose:
             print(f"[Cache] Save: {fp.relative_to(self.cfg.root)}")
@@ -225,14 +195,14 @@ class Cache:
         root = self.cfg.root.resolve()
         verbose = self.cfg.default_verbose
 
-        # 1) find block directories strictly under cache root
-        matches = []
+        # find matches strictly under root
+        matches: List[Path] = []
         for p in root.rglob(block_name):
             if p.is_dir():
                 try:
                     _ = p.resolve().relative_to(root)
                 except ValueError:
-                    continue  # skip anything outside root (paranoia)
+                    continue
                 matches.append(p.resolve())
 
         if not matches:
@@ -240,45 +210,40 @@ class Cache:
                 print(f"[Cache] Invalidate: no '{block_name}' directories under {root}")
             return 0
 
-        # build chain from each match up to the top-most child of cache root
-        def _chain_to_top_under_root(path: Path) -> list[Path]:
+        def _chain_to_top(path: Path) -> List[Path]:
             chain = [path]
             cur = path
             while True:
                 parent = cur.parent
-                # stop when parent is root; 'cur' is then the top-most child under root
                 if parent == root:
                     break
-                # sanity: if we somehow climbed above root, stop
                 try:
                     _ = parent.relative_to(root)
                 except ValueError:
                     break
                 chain.append(parent)
                 cur = parent
-            return chain  # [match, ..., top-under-root]
+            return chain  # leaf -> ... -> top-under-root
 
-        chains = [_chain_to_top_under_root(p) for p in matches]
+        chains = [_chain_to_top(p) for p in matches]
 
         # print chains
-        print(f"[Cache] Invalidate '{block_name}' — found {len(chains)} match(es) under {root}:")
+        print(f"[Cache] Invalidate '{block_name}' — {len(chains)} match(es) under {root}:")
         for ch in chains:
-            rel = [c.relative_to(root) for c in ch]
-            # show from leaf to top, e.g.: a/b/build_pairs -> a/b -> a
-            print("  - " + "  ->  ".join(str(x) for x in rel))
+            rels = [c.relative_to(root) for c in ch]
+            print("  - " + "  ->  ".join(str(x) for x in rels))
 
-        # choose deletion targets
+        # determine targets
         if cascade_up:
-            # delete only the top-most directory for each chain
-            targets = {ch[-1] for ch in chains}  # set of Paths
+            targets = {ch[-1] for ch in chains}  # top-most under root
             mode = "cascade-up (delete top-most roots)"
         else:
-            # delete each matched directory only
-            targets = {ch[0] for ch in chains}
+            targets = {ch[0] for ch in chains}   # matched directories only
             mode = "non-cascading (delete matches only)"
 
-        # sort deepest-first (safer when overlapping paths exist)
-        targets_sorted = sorted(targets, key=lambda p: len(p.relative_to(root).parts), reverse=True)
+        targets_sorted = sorted(
+            targets, key=lambda p: len(p.relative_to(root).parts), reverse=True
+        )
 
         print("\n[Cache] Deletion mode:", mode)
         print("[Cache] Targets:")
@@ -291,11 +256,10 @@ class Cache:
 
         if not force:
             resp = input("\nDelete the cache? (y/n) ").strip().lower()
-            if not (resp == "y" or resp == "yes"):
+            if resp not in ("y", "yes"):
                 print("[Cache] Aborted. No deletion performed.")
                 return 0
 
-        # delete
         removed = 0
         for t in targets_sorted:
             if t.exists():
