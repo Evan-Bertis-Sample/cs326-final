@@ -25,20 +25,22 @@ class ModelGrapher:
         hyperparams: Optional[Dict[str, Any]] = None,
         window_size: Optional[int] = None,
         geo_max: Optional[int] = None,
-        cluster_file : Optional[str] = None
+        cluster_file: Optional[str | Path] = None
     ):
         self.model = model
         self.out_root = Path(out_root)
         self.hyperparams = hyperparams or {}
         self.window_size = window_size
         self.geo_max = geo_max
-        self.cluster_file = cluster_file.split('.')[0] if cluster_file is not None else None
+
+        # Extract filename stem (without extension)
+        self.cluster_name = Path(cluster_file).stem if cluster_file else None
 
         # Precompute dirs
         self.model_root = self.out_root / self.model.name()
         self.base_dir = self.model_root
-        if self.cluster_file is not None:
-            self.base_dir = self.cluster_file / self.base_dir
+        if self.cluster_name is not None:
+            self.base_dir = self.base_dir / self.cluster_name
         if self.window_size is not None:
             self.base_dir = self.base_dir / f"window_{self.window_size}"
         if self.geo_max is not None:
@@ -76,6 +78,22 @@ class ModelGrapher:
             gid = ModelGrapher._sanitize_name(xin.geo_id)
             grouped.setdefault(gid, []).append((xin, yout))
         return grouped
+    
+    def _needs_plot(self, *, split_name: str, geo_id: str, outcome_name: str) -> bool:
+        """
+        Returns True if this outcome image should be (re)generated.
+        Skips plotting if the PNG already exists and is non-empty.
+        """
+        out_path = (
+            self.base_dir
+            / split_name
+            / self._sanitize_name(geo_id)
+            / f"{self._sanitize_name(outcome_name)}.png"
+        )
+        # Already plotted? (non-empty file)
+        if out_path.exists() and out_path.stat().st_size > 1024:  # ~1KB sanity check
+            return False
+        return True
 
     def _plot_one_outcome(
         self,
@@ -114,19 +132,16 @@ class ModelGrapher:
         outcome_names = AnalysisConfig.metadata.outcome_columns
         grouped = self._group_by_geo(pairs)
 
-        for geo_id_sanitized, plist in grouped.items():
-            # sort by prediction date to keep lines monotonic in time
+        for geo_id, plist in grouped.items():
             plist_sorted = sorted(plist, key=lambda pr: pd.to_datetime(pr[1].pred_date))
-
-            # extract series once
             dates = self._ensure_dt([p[1].pred_date for p in plist_sorted])
             Y_true = np.vstack([p[1].outcomes for p in plist_sorted]).astype(float)
-
-            # predict once per pair
             Y_pred = np.vstack([self.model.predict(p[0]).outcomes for p in plist_sorted]).astype(float)
 
-            # plot each outcome
             for j, outcome_name in enumerate(outcome_names):
+                if not self._needs_plot(split_name=split_name, geo_id=geo_id, outcome_name=outcome_name):
+                    continue  # skip — already exists
+
                 y_t = np.nan_to_num(Y_true[:, j], nan=0.0)
                 y_p = np.nan_to_num(Y_pred[:, j], nan=0.0)
                 self._plot_one_outcome(
@@ -134,7 +149,7 @@ class ModelGrapher:
                     y_t,
                     y_p,
                     split_name=split_name,
-                    geo_id=geo_id_sanitized,
+                    geo_id=geo_id,
                     outcome_name=outcome_name,
                 )
 
