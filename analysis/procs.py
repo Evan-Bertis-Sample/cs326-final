@@ -19,6 +19,7 @@ from analysis.predict import (
 )
 from analysis.cache import Cache
 from analysis.io import banner
+from analysis.plotting import ModelGrapher
 
 # Models
 from analysis.models.persistence import PersistenceBaseline
@@ -210,6 +211,18 @@ def handle_models(cluster_file: Union[str, Path], window : int, horizon : int, m
             print(
                 f"[{m.name()}] final test: rmse={final_test.rmse:.4f}  mae={final_test.mae:.4f}  r2={final_test.r2:.4f}"
             )
+
+            grapher = ModelGrapher(
+                model=trained_final,
+                out_root="models",
+                geo_max=max_per_geo,
+                window_size=window,
+                hyperparams=params
+            )
+
+
+            grapher.plot_all(pairs)
+
         finally:
             Cache.End()
 
@@ -219,18 +232,3 @@ def handle_models(cluster_file: Union[str, Path], window : int, horizon : int, m
         print(
             f"- {name:22s} rmse={met.rmse:.4f}  mae={met.mae:.4f}  r2={met.r2:.4f}  params={params}"
         )
-
-    _graph_model_performance(
-        model_names=[n for (n, _, _) in results],
-        model_params=[p for (_, p, _) in results],
-        model_metrics=[m for (_, _, m) in results],
-    )
-
-
-def _graph_model_performance(
-    model_names: List[str],
-    model_params: List[Dict[str, Any]],
-    model_metrics: List[ModelPerformanceMetrics],
-) -> None:
-    # TODO
-    return
