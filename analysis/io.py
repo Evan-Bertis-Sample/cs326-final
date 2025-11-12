@@ -1,52 +1,34 @@
-from rich.console import Console
-from rich import box
-from rich.panel import Panel
-from rich.table import Table
-import time
-import functools
-import inspect
+# analysis/io.py
+from __future__ import annotations
+import functools, inspect, time
 
-console = Console()
+# basic ANSI colors
+CYAN = "\033[96m"
+GREEN = "\033[92m"
+RESET = "\033[0m"
 
-def timed_banner(func):
+def _short(v: object, maxlen: int = 80) -> str:
+    s = repr(v)
+    return s if len(s) <= maxlen else s[:maxlen - 3] + "..."
+
+def banner(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Try to bind arguments to parameter names
+        fname = func.__name__
+        print(f"{CYAN}[{fname}]{RESET} Begin")
+
         try:
             bound = inspect.signature(func).bind_partial(*args, **kwargs)
             bound.apply_defaults()
-            arg_strs = []
             for k, v in bound.arguments.items():
-                val = repr(v)
-                if len(val) > 80:  # limit long values
-                    val = val[:77] + "..."
-                arg_strs.append((k, val))
+                print(f"{CYAN}[{fname}]{RESET} {k} = {_short(v)}")
         except Exception:
-            arg_strs = [("args", str(args)), ("kwargs", str(kwargs))]
+            print(f"{CYAN}[{fname}]{RESET} args = {_short(args)}")
+            print(f"{CYAN}[{fname}]{RESET} kwargs = {_short(kwargs)}")
 
-        # Build a rich table for arguments
-        arg_table = Table(title="Arguments", box=box.MINIMAL_DOUBLE_HEAD)
-        arg_table.add_column("Name", style="bold cyan")
-        arg_table.add_column("Value", style="white")
-        for name, val in arg_strs:
-            arg_table.add_row(name, val)
-
-        console.print(Panel.fit(
-            f"[bold cyan]{func.__name__}() started[/]",
-            box=box.DOUBLE
-        ))
-        console.print(arg_table)
-
-        # Run function
         t0 = time.perf_counter()
         result = func(*args, **kwargs)
-        dur = time.perf_counter() - t0
-
-        console.print(Panel(
-            f"[bold cyan]{func.__name__}() ended[/]\n"
-            f"Duration: [green]{dur:.3f}s[/]",
-            box=box.DOUBLE
-        ))
+        dt = time.perf_counter() - t0
+        print(f"{CYAN}[{fname}]{RESET} Complete — took {GREEN}{dt:.3f}s{RESET}\n")
         return result
-
     return wrapper

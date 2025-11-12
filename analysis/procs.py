@@ -18,7 +18,7 @@ from analysis.predict import (
     ModelOutput,
 )
 from analysis.cache import Cache
-from analysis.io import timed_banner
+from analysis.io import banner
 
 # Models
 from analysis.models.persistence import PersistenceBaseline
@@ -49,8 +49,7 @@ def _get_cluster_from_path(cluster_file: Union[str, Path]) -> List[GeoID]:
     names = [ln for ln in lines if ln and not ln.startswith("#")]
     return GeoID.from_strings(names, unique=True)
 
-
-@timed_banner
+@banner
 def build_training_pairs(
     cluster_file: Union[str, Path],
     window: int,
@@ -128,7 +127,7 @@ def _evaluate_model(
     return OutcomePredictor(model).evaluate(eval_pairs)
 
 
-@timed_banner
+@banner
 def _search_model_hyperspace(
     pairset: ModelTrainingPairSet,
     model: PredictorModel,
@@ -174,8 +173,7 @@ def _search_model_hyperspace(
     assert best_metrics is not None
     return best_params, best_metrics
 
-
-@timed_banner
+@banner
 def handle_models(cluster_file: Union[str, Path], window : int, horizon : int, max_per_geo : int) -> None:
     pairs = Cache.call(build_training_pairs,
         cluster_file=cluster_file,

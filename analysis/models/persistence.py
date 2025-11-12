@@ -1,11 +1,16 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional
-from analysis.predict import *
-import pandas as pd
+from typing import Any, Dict, List, Tuple
 
-class PersistenceBaseline(PredictorModel):
+import numpy as np
+
+from analysis.predict import ModelInputs, ModelOutput, PredictorModel
+from analysis.models.base import BasePredictorModel  # put BasePredictorModel here
+
+
+class PersistenceBaseline(BasePredictorModel):
     def __init__(self, **params: Any):
-        self._params: Dict[str, Any] = {}
+        super().__init__()
+        # no learnable params, but keep interface consistent
         if params:
             self.set_hyperparameters(**params)
 
@@ -13,7 +18,7 @@ class PersistenceBaseline(PredictorModel):
         return "persistence"
 
     def fit_batch(self, batch: List[Tuple[ModelInputs, ModelOutput]]) -> None:
-        return
+        return  # nothing to learn
 
     def predict(self, x: ModelInputs) -> ModelOutput:
         y = x.outcome_history[-1, :].astype(float, copy=False)
@@ -22,9 +27,6 @@ class PersistenceBaseline(PredictorModel):
             outcomes=y,
         )
 
-    def set_hyperparameters(self, **params: Any) -> None:
-        self._params.update(params)
-
     def get_hyperparameters(self) -> Dict[str, List[Any]]:
-        # No tunable hyperparams, but keep consistent interface
+        # No tunables; keep a stable API for search code
         return {"noop": [None]}

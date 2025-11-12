@@ -1,10 +1,11 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from analysis.predict import *
+from analysis.predict import ModelInputs, ModelOutput
+from analysis.models.base import BasePredictorModel  # put BasePredictorModel here
 
 
 @dataclass
@@ -23,15 +24,24 @@ class _Scaler:
         return cls(mean=mean, std=std)
 
 
-class LinearWindowRegressor(PredictorModel):
+class LinearWindowRegressor(BasePredictorModel):
     def __init__(self, **params: Any):
+        super().__init__()
         # defaults
         self.l2: float = 1e-3
         self.use_meta: bool = True
         self.use_policy: bool = True
         self.use_outcome_hist: bool = True
-        self._params: Dict[str, Any] = {}
-        self.set_hyperparameters(**params)
+
+        # persist defaults in base dict, then apply user overrides
+        super().set_hyperparameters(
+            l2=self.l2,
+            use_meta=self.use_meta,
+            use_policy=self.use_policy,
+            use_outcome_hist=self.use_outcome_hist,
+        )
+        if params:
+            self.set_hyperparameters(**params)
 
         self._scaler: Optional[_Scaler] = None
         self._W: Optional[np.ndarray] = None
@@ -80,9 +90,11 @@ class LinearWindowRegressor(PredictorModel):
 
     def predict(self, x: ModelInputs) -> ModelOutput:
         if self._W is None or self._scaler is None or self._out_dim is None:
+            # fall back to persistence if not trained
             y = x.outcome_history[-1, :].astype(float, copy=False)
             return ModelOutput(
-                pred_date=x.end_date + np.timedelta64(x.horizon, "D"), outcomes=y
+                pred_date=x.end_date + np.timedelta64(x.horizon, "D"),
+                outcomes=y,
             )
         f = self._featurize_one(x)[None, :]
         z = self._scaler.transform(f)
@@ -93,11 +105,12 @@ class LinearWindowRegressor(PredictorModel):
         )
 
     def set_hyperparameters(self, **params: Any) -> None:
+        # set attributes when known, keep base dict in sync
         known = {"l2", "use_meta", "use_policy", "use_outcome_hist"}
         for k, v in params.items():
             if k in known:
                 setattr(self, k, v)
-        self._params.update(params)
+        super().set_hyperparameters(**params)
 
     def get_hyperparameters(self) -> Dict[str, List[Any]]:
         return {

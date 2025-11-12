@@ -8,7 +8,6 @@ import analysis.procs as procs
 
 from analysis.oxcgrt_data import OxCGRTData, GeoID
 
-
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--invalidate", nargs="*", default=[],
@@ -24,7 +23,6 @@ def parse_args():
     p.add_argument("--verbose-cache", action="store_true",
                    help="Cache logging enabled.")
     return p.parse_args()
-
 
 def init_cache(args):
     cache_root = Path(AnalysisConfig.paths.output) / ".cache"
@@ -56,22 +54,6 @@ def main():
     args = parse_args()
     init_cache(args)
 
-    # Load dataset and convert GeoIDs to strings
-    data = OxCGRTData(AnalysisConfig.paths.data)
-    ids = data.geo_ids(unique=True)
-    geo_strings = GeoID.to_strings(ids)
-
-    # Choose output path (you can change this as needed)
-    out_path = Path("figures/clusters/all.txt")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Write one ID per line
-    with out_path.open("w", encoding="utf-8") as f:
-        for geo in geo_strings:
-            f.write(f"{geo}\n")
-
-    print(f"Wrote {len(geo_strings)} GeoIDs to {out_path}")
-
     clusters_dir = Path(args.clusters_dir)
     cluster_files = _discover_cluster_files(clusters_dir)
 
@@ -86,15 +68,17 @@ def main():
     Cache.Begin("training")
     try:
         for cfile in cluster_files:
-            cluster_name = cfile.stem  # file name w/o extension
-            block_name = f"train_{cluster_name}"
+            for window_size in range (1, 60):
+                for geo_max in range(100, 1201, 100):
+                    cluster_name = cfile.stem  # file name w/o extension
+                    block_name = f"train_{cluster_name}_window_size_{window_size}_geo_max_{geo_max}"
 
-            Cache.Begin(block_name)
-            try:
-                # Orchestrated training/eval (internally uses cache for sub-steps)
-                Cache.call(procs.handle_models, cluster_file=cfile, window=14, horizon=1, max_per_geo=20)
-            finally:
-                Cache.End()
+                    Cache.Begin(block_name)
+                    try:
+                        # Orchestrated training/eval (internally uses cache for sub-steps)
+                        procs.handle_models(cluster_file=cfile, window=window_size, horizon=1, max_per_geo=geo_max)
+                    finally:
+                        Cache.End()
 
     finally:
         Cache.End()
