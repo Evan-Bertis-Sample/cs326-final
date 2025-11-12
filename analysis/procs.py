@@ -174,32 +174,33 @@ def _search_model_hyperspace(
     assert best_metrics is not None
     return best_params, best_metrics
 
-@banner
-def handle_models(cluster_file: Union[str, Path], window : int, horizon : int, max_per_geo : int) -> None:
-    pairs = Cache.call(build_training_pairs,
+def handle_models(
+    cluster_file: Union[str, Path],
+    window: int,
+    horizon: int,
+    max_per_geo: int
+) -> Tuple[PredictorModel, Dict[str, Any], ModelPerformanceMetrics, List[str]]:
+    pairs = Cache.call(
+        build_training_pairs,
         cluster_file=cluster_file,
         window=window,
         horizon=horizon,
         max_per_geo=max_per_geo,
     )
 
-    # Models to compare
     models_to_train: List[PredictorModel] = [
         PersistenceBaseline(),
         LinearWindowRegressor(),
     ]
 
-    results: List[Tuple[str, Dict[str, Any], ModelPerformanceMetrics]] = []
+    results: List[Tuple[PredictorModel, Dict[str, Any], ModelPerformanceMetrics]] = []
 
     for m in models_to_train:
         block = f"train_{m.name()}"
         Cache.Begin(block)
         try:
-            # Cache-aware search+train per model
-            params, metrics = _search_model_hyperspace(pairs, m)
-            results.append((m.name(), params, metrics))
+            params, metrics_val = _search_model_hyperspace(pairs, m)
 
-            # Final train on train+val, cached under a distinct key
             trained_final = Cache.call(
                 _train_model,
                 pairs,
@@ -212,24 +213,36 @@ def handle_models(cluster_file: Union[str, Path], window : int, horizon : int, m
                 f"[{m.name()}] final test: rmse={final_test.rmse:.4f}  mae={final_test.mae:.4f}  r2={final_test.r2:.4f}"
             )
 
+            # Plot
             grapher = ModelGrapher(
                 cluster_file=str(cluster_file),
                 model=trained_final,
-                out_root="models",
+                out_root="figures",
                 geo_max=max_per_geo,
                 window_size=window,
-                hyperparams=params
+                hyperparams=params,
             )
-
-
             grapher.plot_all(pairs)
 
+            results.append((trained_final, params, final_test))
         finally:
             Cache.End()
 
-    # Quick summary table
+    # Choose the overall best among model types by testing RMSE then MAE
+    assert results, "No models trained."
+    best_model, best_params, best_metrics = min(
+        results,
+        key=lambda t: (t[2].rmse, t[2].mae)
+    )
+
+    # GeoIDs for the cluster
+    geos = [str(g) for g in _get_cluster_from_path(cluster_file)]
+
+    # Print quick summary
     print("\nModel results (validation selection):")
-    for name, params, met in results:
+    for trained_final, params, met in results:
         print(
-            f"- {name:22s} rmse={met.rmse:.4f}  mae={met.mae:.4f}  r2={met.r2:.4f}  params={params}"
+            f"- {trained_final.name():22s} rmse={met.rmse:.4f}  mae={met.mae:.4f}  r2={met.r2:.4f}  params={params}"
         )
+
+    return best_model, best_params, best_metrics, geos

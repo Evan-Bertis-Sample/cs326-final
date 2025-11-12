@@ -1,0 +1,206 @@
+{
+  "USA.Alaska": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Alabama": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Arkansas": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Arizona": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.California": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Colorado": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Connecticut": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Washington DC": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Delaware": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Florida": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Georgia": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Hawaii": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Iowa": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Idaho": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Illinois": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Indiana": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Kansas": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Kentucky": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Louisiana": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Massachusetts": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Maryland": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Maine": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Michigan": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Minnesota": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Missouri": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Mississippi": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Montana": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.North Carolina": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.North Dakota": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Nebraska": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.New Hampshire": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.New Jersey": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.New Mexico": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Nevada": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.New York": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Ohio": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Oklahoma": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Oregon": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Pennsylvania": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Rhode Island": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.South Carolina": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.South Dakota": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Tennessee": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Texas": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Utah": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Virginia": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Vermont": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Washington": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Wisconsin": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.West Virginia": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "USA.Wyoming": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  }
+}

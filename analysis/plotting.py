@@ -10,6 +10,7 @@ import matplotlib
 
 from analysis.config import AnalysisConfig
 from analysis.predict import ModelInputs, ModelOutput, PredictorModel
+from analysis.io import banner
 
 Pair = Tuple[ModelInputs, ModelOutput]
 
@@ -21,7 +22,7 @@ class ModelGrapher:
         self,
         model: PredictorModel,
         *,
-        out_root: Path | str = "models",
+        out_root: Path | str = "figures",
         hyperparams: Optional[Dict[str, Any]] = None,
         window_size: Optional[int] = None,
         geo_max: Optional[int] = None,
@@ -153,6 +154,7 @@ class ModelGrapher:
                     outcome_name=outcome_name,
                 )
 
+    @banner(skip_args=("pairset"))
     def plot_all(self, pairset: "ModelTrainingPairSet") -> None:
         """Plot training, testing, and validation results."""
         self._plot_split(pairset.training, split_name="training")
