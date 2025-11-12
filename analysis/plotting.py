@@ -6,11 +6,14 @@ import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
 
 from analysis.config import AnalysisConfig
 from analysis.predict import ModelInputs, ModelOutput, PredictorModel
 
 Pair = Tuple[ModelInputs, ModelOutput]
+
+matplotlib.use("Agg")  # fast, non-interactive backend
 
 
 class ModelGrapher:
@@ -29,11 +32,13 @@ class ModelGrapher:
         self.hyperparams = hyperparams or {}
         self.window_size = window_size
         self.geo_max = geo_max
-        self.cluster_file = cluster_file
+        self.cluster_file = cluster_file.split('.')[0] if cluster_file is not None else None
 
         # Precompute dirs
         self.model_root = self.out_root / self.model.name()
-        self.base_dir = self.cluster_file / self.model_root
+        self.base_dir = self.model_root
+        if self.cluster_file is not None:
+            self.base_dir = self.cluster_file / self.base_dir
         if self.window_size is not None:
             self.base_dir = self.base_dir / f"window_{self.window_size}"
         if self.geo_max is not None:

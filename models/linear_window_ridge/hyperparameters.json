@@ -1,6 +1,6 @@
 {
-  "l2": 0.001,
-  "use_meta": false,
-  "use_policy": false,
+  "l2": 0.1,
+  "use_meta": true,
+  "use_policy": true,
   "use_outcome_hist": true
 }
