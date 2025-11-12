@@ -24,6 +24,9 @@ from analysis.plotting import ModelGrapher
 # Models
 from analysis.models.persistence import PersistenceBaseline
 from analysis.models.linear_ridge import LinearWindowRegressor
+from analysis.models.linear_decay import LinearDecayRidge
+from analysis.models.sk_mlp import SKMLPRegressor
+from analysis.models.torch_lstm import TorchLSTMRegressor
 
 
 Pair = Tuple[ModelInputs, ModelOutput]
@@ -191,6 +194,9 @@ def handle_models(
     models_to_train: List[PredictorModel] = [
         PersistenceBaseline(),
         LinearWindowRegressor(),
+        LinearDecayRidge(),
+        SKMLPRegressor(),
+        TorchLSTMRegressor()
     ]
 
     results: List[Tuple[PredictorModel, Dict[str, Any], ModelPerformanceMetrics]] = []

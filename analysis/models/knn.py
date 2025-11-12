@@ -1,4 +1,4 @@
-# analysis/models/linear_ridge.py
+# analysis/models/knn.py
 from __future__ import annotations
 from typing import Any, Dict, List, Tuple, Optional
 import numpy as np
@@ -23,27 +23,30 @@ class _Scaler:
         return (X - self.mean) / self.std
 
 
-class LinearWindowRegressor(BasePredictorModel):
+class KNNWindowRegressor(BasePredictorModel):
     def __init__(self, **params: Any):
         super().__init__()
-        self.l2: float = 1e-3
-        self.use_meta: bool = True  # optional
-        super().set_hyperparameters(l2=self.l2, use_meta=self.use_meta)
+        self.k: int = 5
+        self.use_meta: bool = True  # optional; policy & outcome are mandatory
+        self.metric: str = "euclidean"
+
+        super().set_hyperparameters(
+            k=self.k, use_meta=self.use_meta, metric=self.metric
+        )
         if params:
             self.set_hyperparameters(**params)
 
         self._scaler: Optional[_Scaler] = None
-        self._W: Optional[np.ndarray] = None
-        self._out_dim: Optional[int] = None
+        self._X: Optional[np.ndarray] = None
+        self._Y: Optional[np.ndarray] = None
 
     def name(self) -> str:
-        return "linear_window_ridge"
+        return "knn_window"
 
     def _featurize_one(self, x: ModelInputs) -> np.ndarray:
         feats: List[np.ndarray] = []
         if self.use_meta:
             feats.append(np.asarray(x.meta, dtype=float).ravel())
-        # ALWAYS include outcome history and policy history
         feats.append(np.asarray(x.outcome_history, dtype=float).ravel())
         feats.append(np.asarray(x.policy_history, dtype=float).ravel())
         return np.concatenate(feats, axis=0)
@@ -59,40 +62,37 @@ class LinearWindowRegressor(BasePredictorModel):
         if not batch:
             return
         X, Y = self._stack_XY(batch)
-        self._out_dim = Y.shape[1]
         self._scaler = _Scaler.fit(X)
-        Z = self._scaler.transform(X)
-
-        ones = np.ones((Z.shape[0], 1), dtype=Z.dtype)
-        Zb = np.concatenate([ones, Z], axis=1)
-
-        R = np.eye(Zb.shape[1], dtype=Zb.dtype)
-        R[0, 0] = 0.0  # don't regularize bias
-
-        XtX = Zb.T @ Zb + float(self.l2) * R
-        XtY = Zb.T @ Y
-        self._W = np.linalg.solve(XtX, XtY)
+        self._X = self._scaler.transform(X)
+        self._Y = Y
 
     def predict(self, x: ModelInputs) -> ModelOutput:
-        if self._W is None or self._scaler is None or self._out_dim is None:
-            # persistence fallback (still uses outcome history by definition)
+        if self._X is None or self._Y is None or self._scaler is None:
             y = x.outcome_history[-1, :].astype(float, copy=False)
             return ModelOutput(x.end_date + np.timedelta64(x.horizon, "D"), y)
+
         f = self._featurize_one(x)[None, :]
         z = self._scaler.transform(f)
-        zb = np.concatenate([np.ones((1, 1), dtype=z.dtype), z], axis=1)
-        y = (zb @ self._W).ravel()
+        diff = self._X - z
+        dists = np.sqrt(np.sum(diff * diff, axis=1))
+
+        k = min(int(self.k), self._X.shape[0])
+        nn_idx = np.argpartition(dists, kth=k - 1)[:k]
+        y = self._Y[nn_idx].mean(axis=0)
         return ModelOutput(x.end_date + np.timedelta64(x.horizon, "D"), y)
 
     def set_hyperparameters(self, **params: Any) -> None:
-        if "l2" in params:
-            self.l2 = float(params["l2"])
+        if "k" in params:
+            self.k = int(params["k"])
         if "use_meta" in params:
             self.use_meta = bool(params["use_meta"])
+        if "metric" in params:
+            self.metric = str(params["metric"])
         super().set_hyperparameters(**params)
 
     def get_hyperparameters(self) -> Dict[str, List[Any]]:
         return {
-            "l2": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
+            "k": [1, 3, 5, 10, 20],
             "use_meta": [True, False],
+            "metric": ["euclidean"],
         }
