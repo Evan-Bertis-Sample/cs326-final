@@ -128,6 +128,7 @@ def _evaluate_model(
     return OutcomePredictor(model).evaluate(eval_pairs)
 
 
+@timed_banner
 def _search_model_hyperspace(
     pairset: ModelTrainingPairSet,
     model: PredictorModel,
