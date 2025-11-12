@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Tuple, Optional, Protocol
+from typing import List, Tuple, Optional, Protocol, Dict, Any
 import numpy as np
 import pandas as pd
 import hashlib
@@ -43,11 +43,19 @@ class ModelPerformanceMetrics:
     r2: float
     outcome_diffs: List[ModelError]
 
+@dataclass(frozen=True)
+class ModelTrainingPairSet:
+    training : # something
+    testing : # something
+    validation : # something
+
 
 class PredictorModel(Protocol):
     def name(self) -> str: ...
-    def fit_batch(self, batch: List[Tuple[ModelInputs, ModelOutput]]) -> None: ...
-    def predict(self, x: ModelInputs) -> ModelOutput: ...
+    def fit_batch(self, batch: List[Tuple["ModelInputs", "ModelOutput"]]) -> None: ...
+    def predict(self, x: "ModelInputs") -> "ModelOutput": ...
+    def set_hyperparameters(self, **params: Any) -> None: ...
+    def get_hyperparameters(self) -> Dict[str, List[Any]]: ...
 
 
 class ModelIOPairBuilder:
