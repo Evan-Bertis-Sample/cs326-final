@@ -127,7 +127,7 @@ def _evaluate_model(
     return OutcomePredictor(model).evaluate(eval_pairs)
 
 
-@banner
+@banner(skip_args=("pairset"))
 def _search_model_hyperspace(
     pairset: ModelTrainingPairSet,
     model: PredictorModel,

@@ -6,8 +6,6 @@ from analysis.config import AnalysisConfig
 from analysis.cache import Cache, CacheConfig
 import analysis.procs as procs
 
-from analysis.oxcgrt_data import OxCGRTData, GeoID
-
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--invalidate", nargs="*", default=[],
@@ -22,7 +20,10 @@ def parse_args():
                    help="Directory containing cluster files (one GeoID per line).")
     p.add_argument("--verbose-cache", action="store_true",
                    help="Cache logging enabled.")
+    p.add_argument("--debug", action="store_true",
+                   help="Run only a small subset (window_size=14, geo_max=100) for quick debugging.")
     return p.parse_args()
+
 
 def init_cache(args):
     cache_root = Path(AnalysisConfig.paths.output) / ".cache"
@@ -63,23 +64,34 @@ def main():
 
     print(f"Found {len(cluster_files)} cluster file(s) in {clusters_dir}:\n"
           + "\n".join(f"  - {p.name}" for p in cluster_files) + "\n")
+    
+    if args.debug:
+        window_sizes = [14]
+        geo_max_values = [100]
+    else:
+        window_sizes = range(1, 60)
+        geo_max_values = range(100, 1201, 100)
 
     # High-level training block for the run
     Cache.Begin("training")
     try:
         for cfile in cluster_files:
-            for window_size in range (1, 60):
-                for geo_max in range(100, 1201, 100):
+            for window_size in window_sizes:
+                for geo_max in geo_max_values:
                     cluster_name = cfile.stem  # file name w/o extension
                     block_name = f"train_{cluster_name}_window_size_{window_size}_geo_max_{geo_max}"
 
                     Cache.Begin(block_name)
                     try:
                         # Orchestrated training/eval (internally uses cache for sub-steps)
-                        procs.handle_models(cluster_file=cfile, window=window_size, horizon=1, max_per_geo=geo_max)
+                        procs.handle_models(
+                            cluster_file=cfile,
+                            window=window_size,
+                            horizon=1,
+                            max_per_geo=geo_max,
+                        )
                     finally:
                         Cache.End()
-
     finally:
         Cache.End()
 

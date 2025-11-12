@@ -222,8 +222,8 @@ class OxCGRTData:
 
         uniq = pd.unique(keys_series.dropna())
         rs = np.random.RandomState(seed)
-        perm = uniq.copy()
-        rs.shuffle(perm)
+        perm = rs.permutation(uniq)
+
 
         n = len(perm)
         na = int(round(a * n))
