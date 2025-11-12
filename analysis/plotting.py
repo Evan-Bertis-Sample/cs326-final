@@ -22,16 +22,18 @@ class ModelGrapher:
         hyperparams: Optional[Dict[str, Any]] = None,
         window_size: Optional[int] = None,
         geo_max: Optional[int] = None,
+        cluster_file : Optional[str] = None
     ):
         self.model = model
         self.out_root = Path(out_root)
         self.hyperparams = hyperparams or {}
         self.window_size = window_size
         self.geo_max = geo_max
+        self.cluster_file = cluster_file
 
         # Precompute dirs
         self.model_root = self.out_root / self.model.name()
-        self.base_dir = self.model_root
+        self.base_dir = self.cluster_file / self.model_root
         if self.window_size is not None:
             self.base_dir = self.base_dir / f"window_{self.window_size}"
         if self.geo_max is not None:
@@ -64,12 +66,11 @@ class ModelGrapher:
 
     @staticmethod
     def _group_by_geo(pairs: List[Pair]) -> Dict[str, List[Pair]]:
-        out: Dict[str, List[Pair]] = {}
+        grouped: Dict[str, List[Pair]] = {}
         for xin, yout in pairs:
-            gid = getattr(xin, "geo_id", None) or "unknown"
-            gid = ModelGrapher._sanitize_name(str(gid))
-            out.setdefault(gid, []).append((xin, yout))
-        return out
+            gid = ModelGrapher._sanitize_name(xin.geo_id)
+            grouped.setdefault(gid, []).append((xin, yout))
+        return grouped
 
     def _plot_one_outcome(
         self,
@@ -108,20 +109,28 @@ class ModelGrapher:
         outcome_names = AnalysisConfig.metadata.outcome_columns
         grouped = self._group_by_geo(pairs)
 
-        for geo_id, plist in grouped.items():
+        for geo_id_sanitized, plist in grouped.items():
+            # sort by prediction date to keep lines monotonic in time
             plist_sorted = sorted(plist, key=lambda pr: pd.to_datetime(pr[1].pred_date))
+
+            # extract series once
             dates = self._ensure_dt([p[1].pred_date for p in plist_sorted])
             Y_true = np.vstack([p[1].outcomes for p in plist_sorted]).astype(float)
+
+            # predict once per pair
             Y_pred = np.vstack([self.model.predict(p[0]).outcomes for p in plist_sorted]).astype(float)
 
-            for j, out_name in enumerate(outcome_names):
+            # plot each outcome
+            for j, outcome_name in enumerate(outcome_names):
                 y_t = np.nan_to_num(Y_true[:, j], nan=0.0)
                 y_p = np.nan_to_num(Y_pred[:, j], nan=0.0)
                 self._plot_one_outcome(
-                    dates, y_t, y_p,
+                    dates,
+                    y_t,
+                    y_p,
                     split_name=split_name,
-                    geo_id=geo_id,
-                    outcome_name=out_name,
+                    geo_id=geo_id_sanitized,
+                    outcome_name=outcome_name,
                 )
 
     def plot_all(self, pairset: "ModelTrainingPairSet") -> None:

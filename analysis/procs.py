@@ -213,6 +213,7 @@ def handle_models(cluster_file: Union[str, Path], window : int, horizon : int, m
             )
 
             grapher = ModelGrapher(
+                cluster_file=str(cluster_file),
                 model=trained_final,
                 out_root="models",
                 geo_max=max_per_geo,

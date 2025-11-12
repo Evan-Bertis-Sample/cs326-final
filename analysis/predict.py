@@ -13,6 +13,7 @@ from analysis.oxcgrt_data import OxCGRTData
 
 @dataclass(frozen=True)
 class ModelInputs:
+    geo_id : str
     meta: np.ndarray  # shape (M,)
     policy_history: np.ndarray  # shape (W, P)
     outcome_history: np.ndarray  # shape (W, O)
@@ -171,6 +172,7 @@ class ModelIOPairBuilder:
                 y = self._to_num(tgt_row[md.outcome_columns]).fillna(0.0).iloc[0].to_numpy(dtype=float)
 
                 xin = ModelInputs(
+                    geo_id=geo_id,
                     meta=encoded_meta,
                     policy_history=policy_history,
                     outcome_history=outcome_history,
