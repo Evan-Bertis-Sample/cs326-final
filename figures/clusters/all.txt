@@ -1,0 +1,355 @@
+ABW
+AFG
+AGO
+ALB
+AND
+ARE
+ARG
+AUS.Australian Capital Territory
+AUS.New South Wales
+AUS.Northern Territory
+AUS.Queensland
+AUS.South Australia
+AUS.Tasmania
+AUS.Victoria
+AUS.Western Australia
+AUS
+AUT
+AZE
+BDI
+BEL
+BEN
+BFA
+BGD
+BGR
+BHR
+BHS
+BIH
+BLR
+BLZ
+BMU
+BOL
+BRA.Acre
+BRA.Alagoas
+BRA.Amazonas
+BRA.Amapa
+BRA.Bahia
+BRA.Ceara
+BRA.Distrito Federal
+BRA.Espirito Santo
+BRA.Goias
+BRA.Maranhao
+BRA.Minas Gerais
+BRA.Mato Grosso do Sul
+BRA.Mato Grosso
+BRA.Para
+BRA.Paraiba
+BRA.Pernambuco
+BRA.Piaui
+BRA.Parana
+BRA.Rio de Janeiro
+BRA.Rio Grande do Norte
+BRA.Rondonia
+BRA.Roraima
+BRA.Rio Grande do Sul
+BRA.Santa Catarina
+BRA.Sergipe
+BRA.Sao Paulo
+BRA.Tocantins
+BRA
+BRB
+BRN
+BTN
+BWA
+CAF
+CAN.Alberta
+CAN.British Columbia
+CAN.Manitoba
+CAN.New Brunswick
+CAN.Newfoundland and Labrador
+CAN.Nova Scotia
+CAN.Northwest Territories
+CAN.Nunavut
+CAN.Ontario
+CAN.Prince Edward Island
+CAN.Quebec
+CAN.Saskatchewan
+CAN.Yukon
+CAN
+CHE
+CHL
+CHN.Anhui
+CHN.Beijing
+CHN.Chongqing
+CHN.Fujian
+CHN.Guangdong
+CHN.Gansu
+CHN.Guangxi
+CHN.Guizhou
+CHN.Henan
+CHN.Hubei
+CHN.Hebei
+CHN.Hainan
+CHN.Heilongjiang
+CHN.Hunan
+CHN.Jilin
+CHN.Jiangsu
+CHN.Jiangxi
+CHN.Liaoning
+CHN.Inner Mongolia
+CHN.Ningxia
+CHN.Qinghai
+CHN.Sichuan
+CHN.Shandong
+CHN.Shanghai
+CHN.Shaanxi
+CHN.Shanxi
+CHN.Tianjin
+CHN.Xinjiang
+CHN.Tibet
+CHN.Yunnan
+CHN.Zhejiang
+CHN
+CIV
+CMR
+COD
+COG
+COL
+CPV
+CRI
+CUB
+CYP
+CZE
+DEU
+DJI
+DMA
+DNK
+DOM
+DZA
+ECU
+EGY
+ERI
+ESP
+EST
+ETH
+FIN
+FJI
+FRA
+FRO
+GAB
+GBR.England
+GBR.Northern Ireland
+GBR.Scotland
+GBR.Wales
+GBR
+GEO
+GHA
+GIN
+GMB
+GRC
+GRL
+GTM
+GUM
+GUY
+HKG
+HND
+HRV
+HTI
+HUN
+IDN
+IND.Andaman and Nicobar Islands
+IND.Andhra Pradesh
+IND.Arunachal Pradesh
+IND.Assam
+IND.Bihar
+IND.Chandigarh
+IND.Chhattisgarh
+IND.Dadra and Nagar Haveli and Daman and Diu
+IND.Delhi
+IND.Goa
+IND.Gujarat
+IND.Himachal Pradesh
+IND.Haryana
+IND.Jharkhand
+IND.Jammu and Kashmir
+IND.Karnataka
+IND.Kerala
+IND.Ladakh
+IND.Lakshadweep
+IND.Maharashtra
+IND.Meghalaya
+IND.Manipur
+IND.Madhya Pradesh
+IND.Mizoram
+IND.Nagaland
+IND.Odisha
+IND.Punjab
+IND.Puducherry
+IND.Rajasthan
+IND.Sikkim
+IND.Telangana
+IND.Tamil Nadu
+IND.Tripura
+IND.Uttar Pradesh
+IND.Uttarakhand
+IND.West Bengal
+IND
+IRL
+IRN
+IRQ
+ISL
+ISR
+ITA
+JAM
+JOR
+JPN
+KAZ
+KEN
+KGZ
+KHM
+KIR
+KOR
+KWT
+LAO
+LBN
+LBR
+LBY
+LIE
+LKA
+LSO
+LTU
+LUX
+LVA
+MAC
+MAR
+MCO
+MDA
+MDG
+MEX
+MLI
+MLT
+MMR
+MNG
+MOZ
+MRT
+MUS
+MWI
+MYS
+NAM
+NER
+NGA
+NIC
+NLD
+NOR
+NPL
+NZL
+OMN
+PAK
+PAN
+PER
+PHL
+PNG
+POL
+PRI
+PRT
+PRY
+PSE
+QAT
+RKS
+ROU
+RUS
+RWA
+SAU
+SDN
+SEN
+SGP
+SLB
+SLE
+SLV
+SMR
+SOM
+SRB
+SSD
+SUR
+SVK
+SVN
+SWE
+SWZ
+SYC
+SYR
+TCD
+TGO
+THA
+TJK
+TKM
+TLS
+TON
+TTO
+TUN
+TUR
+TWN
+TZA
+UGA
+UKR
+URY
+USA.Alaska
+USA.Alabama
+USA.Arkansas
+USA.Arizona
+USA.California
+USA.Colorado
+USA.Connecticut
+USA.Washington DC
+USA.Delaware
+USA.Florida
+USA.Georgia
+USA.Hawaii
+USA.Iowa
+USA.Idaho
+USA.Illinois
+USA.Indiana
+USA.Kansas
+USA.Kentucky
+USA.Louisiana
+USA.Massachusetts
+USA.Maryland
+USA.Maine
+USA.Michigan
+USA.Minnesota
+USA.Missouri
+USA.Mississippi
+USA.Montana
+USA.North Carolina
+USA.North Dakota
+USA.Nebraska
+USA.New Hampshire
+USA.New Jersey
+USA.New Mexico
+USA.Nevada
+USA.New York
+USA.Ohio
+USA.Oklahoma
+USA.Oregon
+USA.Pennsylvania
+USA.Rhode Island
+USA.South Carolina
+USA.South Dakota
+USA.Tennessee
+USA.Texas
+USA.Utah
+USA.Virginia
+USA.Vermont
+USA.Washington
+USA.Wisconsin
+USA.West Virginia
+USA.Wyoming
+USA
+UZB
+VEN
+VIR
+VNM
+VUT
+YEM
+ZAF
+ZMB
+ZWE

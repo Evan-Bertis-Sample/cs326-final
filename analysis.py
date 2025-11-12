@@ -6,6 +6,8 @@ from analysis.config import AnalysisConfig
 from analysis.cache import Cache, CacheConfig
 import analysis.procs as procs
 
+from analysis.oxcgrt_data import OxCGRTData, GeoID
+
 
 def parse_args():
     p = argparse.ArgumentParser()
@@ -19,12 +21,14 @@ def parse_args():
                    help="Show chains/targets without deleting.")
     p.add_argument("--clusters-dir", default="figures/clusters",
                    help="Directory containing cluster files (one GeoID per line).")
+    p.add_argument("--verbose-cache", action="store_true",
+                   help="Cache logging enabled.")
     return p.parse_args()
 
 
 def init_cache(args):
     cache_root = Path(AnalysisConfig.paths.output) / ".cache"
-    Cache.init(CacheConfig(root=cache_root, compress=3, default_verbose=True))
+    Cache.init(CacheConfig(root=cache_root, compress=3, default_verbose=args.verbose_cache))
 
     # Apply invalidations before any work
     for blk in args.invalidate:
@@ -52,6 +56,22 @@ def main():
     args = parse_args()
     init_cache(args)
 
+    # Load dataset and convert GeoIDs to strings
+    data = OxCGRTData(AnalysisConfig.paths.data)
+    ids = data.geo_ids(unique=True)
+    geo_strings = GeoID.to_strings(ids)
+
+    # Choose output path (you can change this as needed)
+    out_path = Path("figures/clusters/all.txt")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Write one ID per line
+    with out_path.open("w", encoding="utf-8") as f:
+        for geo in geo_strings:
+            f.write(f"{geo}\n")
+
+    print(f"Wrote {len(geo_strings)} GeoIDs to {out_path}")
+
     clusters_dir = Path(args.clusters_dir)
     cluster_files = _discover_cluster_files(clusters_dir)
 
@@ -75,7 +95,7 @@ def main():
                 Cache.call(procs.handle_models, cluster_file=cfile, window=14, horizon=1, max_per_geo=20)
             finally:
                 Cache.End()
-                
+
     finally:
         Cache.End()
 
