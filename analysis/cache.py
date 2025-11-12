@@ -5,6 +5,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import inspect
 import shutil
+import enum
+import datetime as dt
+import os
 
 import numpy as np
 import pandas as pd
@@ -21,19 +24,75 @@ def _bind_args(func: Any, *args, **kwargs) -> Dict[str, Any]:
         d.update(kwargs)
         return d
 
+def _sanitize(s: str, maxlen: int = 64) -> str:
+    # filesystem-safe-ish: replace separators/spaces, strip, collapse repeats
+    s = s.strip().replace("\\", "/").replace(" ", "_")
+    for ch in ["/", ":", "*", "?", "\"", "<", ">", "|"]:
+        s = s.replace(ch, "_")
+    return (s or "none")[:maxlen]
+
+def _relpath_best(p: Path) -> str:
+    p = p.resolve()
+    candidates = []
+    try:
+        candidates.append(p.relative_to(Path.cwd()))
+    except Exception:
+        pass
+    try:
+        candidates.append(p.relative_to(Path.home()))
+    except Exception:
+        pass
+    # pick the shortest textual representation
+    txts = [str(c) for c in candidates] + [str(p)]
+    return min(txts, key=len)
+
 def _value_fingerprint(v: Any) -> str:
+    # primitives
     if isinstance(v, (str, int, float, bool)) or v is None:
-        s = str(v).strip().replace(" ", "_").replace("/", "_").replace("\\", "_")
-        return s[:64] or "none"
+        return _sanitize(str(v))
+    # numpy scalar
+    if isinstance(v, np.generic):
+        return _sanitize(str(v.item()))
+    # pathlib / pathlike
+    if isinstance(v, (Path, os.PathLike)):
+        p = Path(v)
+        try:
+            # if it's a directory/file, prefer readable relative form
+            rel = _relpath_best(p)
+            return _sanitize(rel)
+        except Exception:
+            return _sanitize(str(p))
+    # datetime / date
+    if isinstance(v, (dt.datetime, dt.date)):
+        return _sanitize(v.isoformat())
+    # enum
+    if isinstance(v, enum.Enum):
+        return _sanitize(v.name)
+    # numpy arrays
     if isinstance(v, np.ndarray):
-        return f"nd_{v.shape}_{str(v.dtype)}"
+        return f"nd_{'x'.join(map(str, v.shape))}_{str(v.dtype)}"
+    # pandas
     if isinstance(v, (pd.Series, pd.DataFrame)):
         cols = getattr(v, "columns", None)
         return f"pd_{len(v)}x{len(cols) if cols is not None else 1}"
-    return type(v).__name__ + "_obj"
+    # fallback: type tag
+    return _sanitize(type(v).__name__ + "_obj")
 
 def _seg(name: str, val: Any) -> str:
-    return f"{name}__{_value_fingerprint(val)}"
+    return f"{_sanitize(name)}__{_value_fingerprint(val)}"
+
+
+def _flatten_args(obj: Any, prefix: str = "") -> dict[str, str]:
+    out = {}
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            out.update(_flatten_args(v, f"{prefix}{k}." if prefix else f"{k}."))
+    elif isinstance(obj, (list, tuple)):
+        for i, v in enumerate(obj):
+            out.update(_flatten_args(v, f"{prefix}{i}." if prefix else f"{i}."))
+    else:
+        out[prefix[:-1] if prefix.endswith(".") else prefix] = str(obj)
+    return out
 
 @dataclass
 class CacheConfig:
@@ -123,7 +182,14 @@ class Cache:
     @classmethod
     def call(cls, func: Any, *args, **kwargs) -> Any:
         self = cls.instance()
-        bound = _bind_args(func, *args, **kwargs)
+        flat_kwargs = {}
+        for k, v in kwargs.items():
+            if isinstance(v, (dict, list, tuple)):
+                flat_kwargs.update({f"{k}_{kk}": vv for kk, vv in _flatten_args(v).items()})
+            else:
+                flat_kwargs[k] = v
+
+        bound = _bind_args(func, *args, **flat_kwargs)
         _, fp = self._entry_path(func, bound)
 
         verbose = self._stack[-1][2] if self._stack else self.cfg.default_verbose
@@ -133,7 +199,7 @@ class Cache:
                 print(f"[Cache] Hit:  {fp.relative_to(self.cfg.root)}")
             return out
 
-        out = func(*args, **kwargs)
+        out = func(*args, **kwargs)  # original kwargs to function
         dump(out, fp, compress=self.cfg.compress)
         if verbose:
             print(f"[Cache] Save: {fp.relative_to(self.cfg.root)}")

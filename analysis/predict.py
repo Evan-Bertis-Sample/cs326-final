@@ -43,13 +43,6 @@ class ModelPerformanceMetrics:
     r2: float
     outcome_diffs: List[ModelError]
 
-@dataclass(frozen=True)
-class ModelTrainingPairSet:
-    training : # something
-    testing : # something
-    validation : # something
-
-
 class PredictorModel(Protocol):
     def name(self) -> str: ...
     def fit_batch(self, batch: List[Tuple["ModelInputs", "ModelOutput"]]) -> None: ...

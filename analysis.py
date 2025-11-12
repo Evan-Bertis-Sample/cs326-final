@@ -1,33 +1,32 @@
-from analysis.config import AnalysisConfig
-from analysis.oxcgrt_data import OxCGRTData, GeoID
-
-from analysis.predict import OutcomePredictor, ModelIOPairBuilder
-from analysis.models.persistence import PersistenceModel
-from analysis.cache import Cache, CacheConfig
-
+from __future__ import annotations
 from pathlib import Path
 import argparse
 
+from analysis.config import AnalysisConfig
+from analysis.cache import Cache, CacheConfig
 import analysis.procs as procs
+
 
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--invalidate", nargs="*", default=[],
-                help="Block names to invalidate inside the cache.")
+                   help="Block names to invalidate inside the cache.")
     p.add_argument("--no-cascade-up", action="store_true",
-                help="Delete the top-most directory per match (removes whole subtree).")
+                   help="Do NOT cascade upward when invalidating blocks.")
     p.add_argument("--force", action="store_true",
-                help="Skip confirmation prompt.")
+                   help="Skip confirmation prompt when invalidating.")
     p.add_argument("--print-only", action="store_true",
-                help="Show chains and targets without deleting.")
+                   help="Show chains/targets without deleting.")
+    p.add_argument("--clusters-dir", default="figures/clusters",
+                   help="Directory containing cluster files (one GeoID per line).")
     return p.parse_args()
 
+
 def init_cache(args):
-    # init cache
     cache_root = Path(AnalysisConfig.paths.output) / ".cache"
     Cache.init(CacheConfig(root=cache_root, compress=3, default_verbose=True))
 
-    # apply invalidations before any work
+    # Apply invalidations before any work
     for blk in args.invalidate:
         Cache.invalidate_block(
             blk,
@@ -36,23 +35,51 @@ def init_cache(args):
             print_only=args.print_only,
         )
 
-    print("Cache initialized!\n")
-    
+    print(f"Cache initialized at: {cache_root}\n")
+
+
+def _discover_cluster_files(clusters_dir: Path) -> list[Path]:
+    # accept any file (txt, csv, etc.); skip dirs and hidden files
+    if not clusters_dir.exists():
+        return []
+    files = [p for p in clusters_dir.iterdir()
+             if p.is_file() and not p.name.startswith(".")]
+    # sort for stable ordering
+    return sorted(files, key=lambda p: p.name.lower())
+
 
 def main():
     args = parse_args()
     init_cache(args)
-    # Load dataset
+
+    clusters_dir = Path(args.clusters_dir)
+    cluster_files = _discover_cluster_files(clusters_dir)
+
+    if not cluster_files:
+        print(f"No cluster files found in: {clusters_dir}")
+        return
+
+    print(f"Found {len(cluster_files)} cluster file(s) in {clusters_dir}:\n"
+          + "\n".join(f"  - {p.name}" for p in cluster_files) + "\n")
+
+    # High-level training block for the run
     Cache.Begin("training")
+    try:
+        for cfile in cluster_files:
+            cluster_name = cfile.stem  # file name w/o extension
+            block_name = f"train_{cluster_name}"
 
-    Cache.Begin("build_pairs_all")
-    train_pairs = Cache.call(procs.build_training_pairs, window=14, horizon=1, max_per_geo=1)
-    have_same = Cache.exists(procs.build_training_pairs, window=14, horizon=1, cluster="ALL")
-    Cache.End()
+            Cache.Begin(block_name)
+            try:
+                # Orchestrated training/eval (internally uses cache for sub-steps)
+                Cache.call(procs.handle_models, cluster_file=cfile, window=14, horizon=1, max_per_geo=20)
+            finally:
+                Cache.End()
+                
+    finally:
+        Cache.End()
 
-    Cache.Begin("train")
-
-    Cache.End()
+    print("\nAll clusters processed.")
 
 
 if __name__ == "__main__":
