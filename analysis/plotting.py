@@ -34,6 +34,9 @@ class ModelGrapher:
         self.window_size = window_size
         self.geo_max = geo_max
 
+        self.hyperparams["geo_max"] = self.geo_max
+        self.hyperparams["window_size"] = self.window_size
+
         # Extract filename stem (without extension)
         self.cluster_name = Path(cluster_file).stem if cluster_file else None
 

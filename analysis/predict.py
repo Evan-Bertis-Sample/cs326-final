@@ -119,13 +119,23 @@ class ModelIOPairBuilder:
 
     def _encode_outcomes(self, df: pd.DataFrame, start: int, end: int) -> np.ndarray:
         cols = AnalysisConfig.metadata.outcome_columns
-        date_col = AnalysisConfig.metadata.date_column
         win = df.iloc[start:end].copy()
 
-        out = self._to_num(win[cols]).fillna(0.0).to_numpy(dtype=float)
+        arr_df = self._to_num(win[cols])
+        # forward fill but *don't* replace remaining NaNs with 0
+        arr_ff = arr_df.ffill()
 
+        # If any column is still NaN for the *entire* window, we can decide to:
+        # 1) treat as constant 0, or
+        # 2) skip this pair.
+        if arr_ff.isna().all(axis=0).any():
+            # option: return None and handle skip in get_pairs
+            return None
+
+        arr_ff = arr_ff.fillna(0.0)  # occasional NaN at the very start
+        out = arr_ff.to_numpy(dtype=float, copy=True)
         assert out.shape[0] == (end - start)
-        return out  # shape (W, O)
+        return out
 
 
     def get_pairs(self, data: OxCGRTData, verbose: bool = True) -> List[Tuple[ModelInputs, ModelOutput]]:
@@ -136,6 +146,11 @@ class ModelIOPairBuilder:
 
         geo_ids = data.geo_id_strings(unique=True)
         geo_iter = tqdm(geo_ids, desc="Building training pairs", unit="region") if verbose else geo_ids
+
+        skipped = {
+            "bad_policy" : 0,
+            "bad_outcome" : 0
+        }
 
         for geo_id in geo_iter:
             geo_df = data.get_timeseries(str(geo_id))
@@ -163,6 +178,14 @@ class ModelIOPairBuilder:
                 policy_history = self._encode_policies(geo_df, start, end)
                 outcome_history = self._encode_outcomes(geo_df, start, end)
 
+                if policy_history is None:
+                    skipped["bad_policy"] += 1
+                    continue
+                
+                if outcome_history is None:
+                    skipped["bad_outcome"] += 1
+                    continue
+
                 end_date = pd.to_datetime(geo_df.iloc[end - 1][date_col])
                 pred_date = end_date + pd.Timedelta(days=self.horizon)
 
@@ -184,6 +207,9 @@ class ModelIOPairBuilder:
 
         if verbose:
             tqdm.write(f"Finished building {len(pairs):,} training pairs.")
+            tqdm.write(f"Pairs skipped due to bad policy: {skipped['bad_policy']}")
+            tqdm.write(f"Pairs skipped due to bad outcome: {skipped['bad_outcome']}")
+
 
         return pairs
 
