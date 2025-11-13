@@ -1,205 +1,249 @@
 {
-  "USA.Alaska": {
+  "NGA": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Alabama": {
+  "GHA": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Arkansas": {
+  "KEN": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Arizona": {
+  "UGA": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.California": {
+  "ETH": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Colorado": {
+  "ZMB": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Connecticut": {
+  "ZWE": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Washington DC": {
+  "MWI": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Delaware": {
+  "BGD": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Florida": {
+  "PAK": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Georgia": {
+  "AFG": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Hawaii": {
+  "NPL": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Iowa": {
+  "KHM": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Idaho": {
+  "MMR": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Illinois": {
+  "LAO": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Indiana": {
+  "VEN": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Kansas": {
+  "BOL": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Kentucky": {
+  "ECU": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Louisiana": {
+  "DOM": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Massachusetts": {
+  "EGY": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Maryland": {
+  "SDN": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Maine": {
+  "SEN": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Michigan": {
+  "TGO": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Minnesota": {
+  "MAR": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Missouri": {
+  "TUN": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Mississippi": {
+  "USA": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Montana": {
+  "MEX": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.North Carolina": {
+  "BRA": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.North Dakota": {
+  "ARG": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Nebraska": {
+  "CHL": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.New Hampshire": {
+  "COL": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.New Jersey": {
+  "PER": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.New Mexico": {
+  "URY": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Nevada": {
+  "ZAF": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.New York": {
+  "IND": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Ohio": {
+  "THA": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Oklahoma": {
+  "MYS": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Oregon": {
+  "PHL": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Pennsylvania": {
+  "IDN": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Rhode Island": {
+  "TUR": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.South Carolina": {
+  "POL": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.South Dakota": {
+  "CZE": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Tennessee": {
+  "HUN": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Texas": {
+  "RUS": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Utah": {
+  "AUS": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Virginia": {
+  "NZL": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Vermont": {
+  "KOR": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Washington": {
+  "JPN": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Wisconsin": {
+  "SGP": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.West Virginia": {
+  "TWN": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   },
-  "USA.Wyoming": {
+  "CAN": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "GBR": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "DEU": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "FRA": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "ITA": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "ESP": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "IRL": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "NOR": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "SWE": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "FIN": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "DNK": {
+    "model_name": "persistence",
+    "model_file": "models/persistence/persistence_a0105656df.joblib"
+  },
+  "ISL": {
     "model_name": "persistence",
     "model_file": "models/persistence/persistence_a0105656df.joblib"
   }

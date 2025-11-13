@@ -6,6 +6,7 @@ import itertools
 import hashlib
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from analysis.config import AnalysisConfig
 from analysis.oxcgrt_data import OxCGRTData, GeoID
@@ -131,7 +132,7 @@ def _evaluate_model(
     return OutcomePredictor(model).evaluate(eval_pairs)
 
 
-@banner(skip_args=("pairset"))
+@banner(skip_args=("pairset",))
 def _search_model_hyperspace(
     pairset: ModelTrainingPairSet,
     model: PredictorModel,
@@ -147,14 +148,20 @@ def _search_model_hyperspace(
             model,
             hyperparams=params,
             use_val=False,
-        )  # extra kw to key the cache
+        )
         metrics = _evaluate_model(pairset, trained, split="validation")
         return params, metrics
+
+    # total configs for progress bar
+    total_cfgs = 1
+    for v in space.values():
+        total_cfgs *= len(v)
 
     best_params: Dict[str, Any] = {}
     best_metrics: Optional[ModelPerformanceMetrics] = None
 
-    for params in _param_grid(space):
+    desc = f"Grid[{model.name()}]"
+    for params in tqdm(_param_grid(space), total=total_cfgs, desc=desc, unit="cfg"):
         trained = Cache.call(
             _train_model,
             pairset,
