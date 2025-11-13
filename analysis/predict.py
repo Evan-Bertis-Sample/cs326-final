@@ -223,6 +223,7 @@ class OutcomePredictor:
     def predict(self, inputs: ModelInputs) -> ModelOutput:
         return self.model.predict(inputs)
 
+
     def evaluate(
         self, tests: List[Tuple[ModelInputs, ModelOutput]]
     ) -> ModelPerformanceMetrics:
@@ -249,12 +250,15 @@ class OutcomePredictor:
             y_true_all.append(yt)
             y_pred_all.append(yp)
 
-        yt = np.vstack(y_true_all).reshape(-1)
-        yp = np.vstack(y_pred_all).reshape(-1)
+        # Shape: (N_samples, O)
+        Y_true = np.vstack(y_true_all)
+        Y_pred = np.vstack(y_pred_all)
 
-        mask = ~np.isnan(yt) & ~np.isnan(yp)
-        yt, yp = yt[mask], yp[mask]
-        if yt.size == 0:
+        # Mask NaNs per element
+        mask = ~np.isnan(Y_true) & ~np.isnan(Y_pred)
+        # if a whole column is invalid, drop it
+        valid_cols = mask.any(axis=0)
+        if not valid_cols.any():
             return ModelPerformanceMetrics(
                 mae=np.nan,
                 mse=np.nan,
@@ -264,13 +268,57 @@ class OutcomePredictor:
                 outcome_diffs=errs,
             )
 
-        mae = float(np.mean(np.abs(yt - yp)))
-        mse = float(np.mean((yt - yp) ** 2))
-        rmse = float(np.sqrt(mse))
-        mape = float(np.mean(np.abs((yt - yp) / np.maximum(np.abs(yt), 1e-8))) * 100.0)
-        ss_res = float(np.sum((yt - yp) ** 2))
-        ss_tot = float(np.sum((yt - np.mean(yt)) ** 2))
-        r2 = float(1.0 - ss_res / ss_tot) if ss_tot > 0 else np.nan
+        Yt = Y_true[:, valid_cols]
+        Yp = Y_pred[:, valid_cols]
+        M = mask[:, valid_cols]
+
+        per_mae = []
+        per_mse = []
+        per_rmse = []
+        per_mape = []
+        per_r2 = []
+
+        for j in range(Yt.shape[1]):
+            yj_t = Yt[:, j][M[:, j]]
+            yj_p = Yp[:, j][M[:, j]]
+            if yj_t.size == 0:
+                continue
+
+            diff = yj_p - yj_t
+            mae_j = float(np.mean(np.abs(diff)))
+            mse_j = float(np.mean(diff ** 2))
+            rmse_j = float(np.sqrt(mse_j))
+
+            # avoid divide-by-zero for MAPE
+            denom = np.maximum(np.abs(yj_t), 1e-8)
+            mape_j = float(np.mean(np.abs(diff / denom) * 100.0))
+
+            ss_res_j = float(np.sum(diff ** 2))
+            ss_tot_j = float(np.sum((yj_t - np.mean(yj_t)) ** 2))
+            r2_j = float(1.0 - ss_res_j / ss_tot_j) if ss_tot_j > 0 else np.nan
+
+            per_mae.append(mae_j)
+            per_mse.append(mse_j)
+            per_rmse.append(rmse_j)
+            per_mape.append(mape_j)
+            per_r2.append(r2_j)
+
+        if not per_mae:
+            return ModelPerformanceMetrics(
+                mae=np.nan,
+                mse=np.nan,
+                rmse=np.nan,
+                mape=np.nan,
+                r2=np.nan,
+                outcome_diffs=errs,
+            )
+
+        mae = float(np.mean(per_mae))
+        mse = float(np.mean(per_mse))
+        rmse = float(np.mean(per_rmse))
+        mape = float(np.mean(per_mape))
+        # you could also report median R² if you want robustness
+        r2 = float(np.nanmean(per_r2))
 
         return ModelPerformanceMetrics(
             mae=mae, mse=mse, rmse=rmse, mape=mape, r2=r2, outcome_diffs=errs

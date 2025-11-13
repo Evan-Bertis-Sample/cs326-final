@@ -1,0 +1,69 @@
+{
+  "model": "torch_lstm",
+  "hyperparameters": {
+    "hidden": 256,
+    "num_layers": 2,
+    "dropout": 0.2,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "epochs": 20,
+    "batch_size": 64,
+    "use_meta": false,
+    "geo_max": 15,
+    "window_size": 1
+  },
+  "cluster_name": "cluster_min",
+  "window_size": 1,
+  "geo_max": 15,
+  "geos": [
+    "AFG",
+    "BGD",
+    "BOL",
+    "DOM",
+    "ECU",
+    "EGY",
+    "ETH",
+    "GHA",
+    "KEN",
+    "KHM",
+    "LAO",
+    "MAR",
+    "MMR",
+    "MWI",
+    "NGA",
+    "NPL",
+    "PAK",
+    "SDN",
+    "SEN",
+    "TGO",
+    "TUN",
+    "UGA",
+    "VEN",
+    "ZMB",
+    "ZWE"
+  ],
+  "splits": {
+    "training": {
+      "mae": 35796.752320736545,
+      "mse": 31015662401.59122,
+      "rmse": 63616.321484921966,
+      "mape": 32460842759.482857,
+      "r2": -0.37804610654865534
+    },
+    "testing": {
+      "mae": 51421.60844670349,
+      "mse": 38079930553.878365,
+      "rmse": 70719.11095912808,
+      "mape": 23284566701.45191,
+      "r2": -0.9217261875548561
+    },
+    "validation": {
+      "mae": 15206.471588933578,
+      "mse": 3543556763.4462943,
+      "rmse": 21448.502860594763,
+      "mape": 32328451680.910133,
+      "r2": -0.6918828380721262
+    }
+  },
+  "timestamp": "2025-11-13T06:32:17.467349Z"
+}

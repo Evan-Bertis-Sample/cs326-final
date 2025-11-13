@@ -1,0 +1,63 @@
+{
+  "model": "linear_window_ridge",
+  "hyperparameters": {
+    "l2": 0.01,
+    "use_meta": false,
+    "geo_max": 15,
+    "window_size": 1
+  },
+  "cluster_name": "cluster_min",
+  "window_size": 1,
+  "geo_max": 15,
+  "geos": [
+    "AFG",
+    "BGD",
+    "BOL",
+    "DOM",
+    "ECU",
+    "EGY",
+    "ETH",
+    "GHA",
+    "KEN",
+    "KHM",
+    "LAO",
+    "MAR",
+    "MMR",
+    "MWI",
+    "NGA",
+    "NPL",
+    "PAK",
+    "SDN",
+    "SEN",
+    "TGO",
+    "TUN",
+    "UGA",
+    "VEN",
+    "ZMB",
+    "ZWE"
+  ],
+  "splits": {
+    "training": {
+      "mae": 75.54160193061439,
+      "mse": 130765.99441705189,
+      "rmse": 131.03036673872558,
+      "mape": 12806419305.460348,
+      "r2": 0.995008439893736
+    },
+    "testing": {
+      "mae": 98.86871291954346,
+      "mse": 188656.86760085667,
+      "rmse": 158.0019421202862,
+      "mape": 6442350426.947063,
+      "r2": 0.9937285627451242
+    },
+    "validation": {
+      "mae": 52.66430595527452,
+      "mse": 31318.058439936547,
+      "rmse": 65.25386297307439,
+      "mape": 6196663853.60291,
+      "r2": 0.9856740574514318
+    }
+  },
+  "timestamp": "2025-11-13T06:31:56.095135Z"
+}

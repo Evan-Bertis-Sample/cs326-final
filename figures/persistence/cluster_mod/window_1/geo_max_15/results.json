@@ -1,0 +1,56 @@
+{
+  "model": "persistence",
+  "hyperparameters": {
+    "noop": null,
+    "geo_max": 15,
+    "window_size": 1
+  },
+  "cluster_name": "cluster_mod",
+  "window_size": 1,
+  "geo_max": 15,
+  "geos": [
+    "ARG",
+    "BRA",
+    "CHL",
+    "COL",
+    "CZE",
+    "HUN",
+    "IDN",
+    "IND",
+    "MEX",
+    "MYS",
+    "PER",
+    "PHL",
+    "POL",
+    "RUS",
+    "THA",
+    "TUR",
+    "URY",
+    "USA",
+    "ZAF"
+  ],
+  "splits": {
+    "training": {
+      "mae": 2068.534127777778,
+      "mse": 293425800.6665069,
+      "rmse": 6121.864186485295,
+      "mape": 1.1646688154410547,
+      "r2": 0.9924774424742638
+    },
+    "testing": {
+      "mae": 547.6782916666667,
+      "mse": 11982434.63228875,
+      "rmse": 1237.4997525691815,
+      "mape": 1.6628563435283061,
+      "r2": 0.9692373396835541
+    },
+    "validation": {
+      "mae": 824.444375,
+      "mse": 15522096.040025417,
+      "rmse": 1437.3231109090539,
+      "mape": 1.1958565027068024,
+      "r2": 0.998833123607735
+    }
+  },
+  "timestamp": "2025-11-13T06:32:44.105403Z"
+}

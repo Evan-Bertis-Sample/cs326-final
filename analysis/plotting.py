@@ -7,6 +7,15 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
+import datetime
+
+from analysis.predict import (
+    ModelInputs,
+    ModelOutput,
+    PredictorModel,
+    OutcomePredictor,
+    ModelPerformanceMetrics,
+)
 
 from analysis.config import AnalysisConfig
 from analysis.predict import ModelInputs, ModelOutput, PredictorModel
@@ -50,8 +59,6 @@ class ModelGrapher:
         if self.geo_max is not None:
             self.base_dir = self.base_dir / f"geo_max_{self.geo_max}"
 
-        self._save_hyperparams_json()
-
     @staticmethod
     def _sanitize_name(s: str, maxlen: int = 64) -> str:
         s = (s or "unknown").strip().replace("\\", "_").replace("/", "_")
@@ -62,10 +69,44 @@ class ModelGrapher:
     def _ensure_dt(dts: Iterable[pd.Timestamp]) -> np.ndarray:
         return np.array(pd.to_datetime(list(dts), errors="coerce"))
 
-    def _save_hyperparams_json(self) -> None:
-        self.model_root.mkdir(parents=True, exist_ok=True)
-        with (self.model_root / "hyperparameters.json").open("w", encoding="utf-8") as f:
-            json.dump(self.hyperparams, f, indent=2, ensure_ascii=False)
+    def _write_results_json(
+            self,
+            geo_ids_seen: list[str],
+            metrics_by_split: dict[str, Optional[ModelPerformanceMetrics]],
+        ) -> None:
+            """
+            Write a summary JSON including hyperparameters, splits' scores, and geo coverage.
+            """
+            out_path = self.base_dir / "results.json"
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+
+            def _metrics_dict(m: Optional[ModelPerformanceMetrics]) -> Optional[dict[str, float]]:
+                if m is None:
+                    return None
+                return {
+                    "mae": m.mae,
+                    "mse": m.mse,
+                    "rmse": m.rmse,
+                    "mape": m.mape,
+                    "r2": m.r2,
+                }
+
+            data = {
+                "model": self.model.name(),
+                "hyperparameters": self.hyperparams,
+                "cluster_name": self.cluster_name,
+                "window_size": self.window_size,
+                "geo_max": self.geo_max,
+                "geos": sorted(set(geo_ids_seen)),
+                "splits": {
+                    split: _metrics_dict(m)
+                    for split, m in metrics_by_split.items()
+                },
+                "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+            }
+
+            with out_path.open("w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
 
     @staticmethod
     def _as_compact_params(hp: Dict[str, Any]) -> str:
@@ -157,9 +198,34 @@ class ModelGrapher:
                     outcome_name=outcome_name,
                 )
 
-    @banner(skip_args=("pairset"))
+    @banner(skip_args=("pairset",))
     def plot_all(self, pairset: "ModelTrainingPairSet") -> None:
-        """Plot training, testing, and validation results."""
-        self._plot_split(pairset.training, split_name="training")
-        self._plot_split(pairset.testing, split_name="testing")
-        self._plot_split(pairset.validation, split_name="validation")
+        """Plot training, testing, and validation results, and write results.json."""
+        geo_ids_seen: list[str] = []
+
+        for split_name, pairs in [
+            ("training", pairset.training),
+            ("testing", pairset.testing),
+            ("validation", pairset.validation),
+        ]:
+            if not pairs:
+                continue
+            grouped = self._group_by_geo(pairs)
+            geo_ids_seen.extend(grouped.keys())
+            self._plot_split(pairs, split_name=split_name)
+
+        predictor = OutcomePredictor(self.model)
+
+        def _eval(pairs: Optional[list[Pair]]) -> Optional[ModelPerformanceMetrics]:
+            if not pairs:
+                return None
+            return predictor.evaluate(pairs)
+
+        metrics_by_split: dict[str, Optional[ModelPerformanceMetrics]] = {
+            "training": _eval(pairset.training),
+            "testing": _eval(pairset.testing),
+            "validation": _eval(pairset.validation),
+        }
+
+        self._write_results_json(geo_ids_seen, metrics_by_split)
+

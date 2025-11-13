@@ -1,0 +1,63 @@
+{
+  "model": "sk_mlp",
+  "hyperparameters": {
+    "use_meta": false,
+    "hidden_layer_sizes": [
+      256,
+      128
+    ],
+    "alpha": 0.0001,
+    "learning_rate_init": 0.0003,
+    "max_iter": 200,
+    "geo_max": 10,
+    "window_size": 1
+  },
+  "cluster_name": "cluster_mod",
+  "window_size": 1,
+  "geo_max": 10,
+  "geos": [
+    "ARG",
+    "BRA",
+    "CHL",
+    "COL",
+    "CZE",
+    "HUN",
+    "IDN",
+    "IND",
+    "MEX",
+    "MYS",
+    "PER",
+    "PHL",
+    "POL",
+    "RUS",
+    "THA",
+    "TUR",
+    "URY",
+    "USA",
+    "ZAF"
+  ],
+  "splits": {
+    "training": {
+      "mae": 28829.51545200489,
+      "mse": 84629109960.49524,
+      "rmse": 169280.11189761522,
+      "mape": 9875690911489.516,
+      "r2": -11687285.592262609
+    },
+    "testing": {
+      "mae": 2559.772143437629,
+      "mse": 24240854.077326916,
+      "rmse": 3711.9995431442703,
+      "mape": 1696114560284.915,
+      "r2": -5804.702110540362
+    },
+    "validation": {
+      "mae": 15127.87504573465,
+      "mse": 1913578792.176662,
+      "rmse": 22100.45876633994,
+      "mape": 4494010829147.365,
+      "r2": -81385.9608097955
+    }
+  },
+  "timestamp": "2025-11-13T06:32:18.670574Z"
+}

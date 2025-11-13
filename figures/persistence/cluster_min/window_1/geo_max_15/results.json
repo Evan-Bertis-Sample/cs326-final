@@ -1,0 +1,62 @@
+{
+  "model": "persistence",
+  "hyperparameters": {
+    "noop": null,
+    "geo_max": 15,
+    "window_size": 1
+  },
+  "cluster_name": "cluster_min",
+  "window_size": 1,
+  "geo_max": 15,
+  "geos": [
+    "AFG",
+    "BGD",
+    "BOL",
+    "DOM",
+    "ECU",
+    "EGY",
+    "ETH",
+    "GHA",
+    "KEN",
+    "KHM",
+    "LAO",
+    "MAR",
+    "MMR",
+    "MWI",
+    "NGA",
+    "NPL",
+    "PAK",
+    "SDN",
+    "SEN",
+    "TGO",
+    "TUN",
+    "UGA",
+    "VEN",
+    "ZMB",
+    "ZWE"
+  ],
+  "splits": {
+    "training": {
+      "mae": 69.5601375,
+      "mse": 253330.99082570834,
+      "rmse": 182.16015761188547,
+      "mape": 1.0633709375823908,
+      "r2": 0.993514627182795
+    },
+    "testing": {
+      "mae": 89.01405555555556,
+      "mse": 238911.51717500002,
+      "rmse": 177.56366795747752,
+      "mape": 0.5596669593546257,
+      "r2": 0.995191545623373
+    },
+    "validation": {
+      "mae": 28.036291666666664,
+      "mse": 25806.364560416667,
+      "rmse": 59.18230237322144,
+      "mape": 1.185351048793376,
+      "r2": 0.983467765546007
+    }
+  },
+  "timestamp": "2025-11-13T06:31:55.996586Z"
+}
