@@ -152,7 +152,7 @@ class SKMLPRegressor(BasePredictorModel):
             "hidden_layer_sizes": [(128, 64), (256, 128), (256, 128, 64)],
             "alpha": [1e-5, 1e-4, 1e-3],
             "learning_rate_init": [1e-3, 3e-4],
-            "max_iter": [200, 400],
+            "max_iter": [200],
             "filter_type": ["none", "ema", "boxcar"],
             "filter_alpha": [0.2, 0.5, 0.8],
             "filter_window": [3, 7, 14],

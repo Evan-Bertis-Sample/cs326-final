@@ -183,8 +183,8 @@ class ModelIOPairBuilder:
                 upper_hard = None
 
             # kind of a hack, but to just get rid of the last bit of data, we remove
-            # like a month
-            n = len(geo_df) - 1000
+            # like the last 3 months
+            n = len(geo_df) - 100
             step_size = 1
             if self.max_per_geo is not None and self.max_per_geo > 0:
                 total_possible = n - self.window - self.horizon + 1
