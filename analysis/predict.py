@@ -148,24 +148,40 @@ class ModelIOPairBuilder:
         geo_iter = tqdm(geo_ids, desc="Building training pairs", unit="region") if verbose else geo_ids
 
         skipped = {
-            "bad_policy" : 0,
-            "bad_outcome" : 0
+            "bad_policy": 0,
+            "bad_outcome": 0,
+            "bad_target": 0,
         }
+
+        clip_percentile = 99.5      # upper bound
+        clip_factor = 2.0           # allow x2 wiggle room before skipping
 
         for geo_id in geo_iter:
             geo_df = data.get_timeseries(str(geo_id))
             if geo_df.empty:
                 continue
-            geo_df = self._ensure_dt(geo_df, date_col).sort_values(date_col).reset_index(drop=True)
+
+            geo_df = (
+                self._ensure_dt(geo_df, date_col)
+                .sort_values(date_col)
+                .reset_index(drop=True)
+            )
             encoded_meta = self._encode_meta(geo_df)
 
-            n = len(geo_df)
+            # Compute per-geo outcome clipping thresholds (vector of shape O,)
+            outcome_df = self._to_num(geo_df[md.outcome_columns]).fillna(0.0)
+            if len(outcome_df) > 0:
+                upper_clip = np.percentile(outcome_df.to_numpy(dtype=float), clip_percentile, axis=0)
+                upper_hard = upper_clip * clip_factor
+            else:
+                upper_clip = None
+                upper_hard = None
 
+            n = len(geo_df)
             step_size = 1
-            if self.max_per_geo != None and self.max_per_geo > 0:
+            if self.max_per_geo is not None and self.max_per_geo > 0:
                 total_possible = n - self.window - self.horizon + 1
                 step_size = math.floor(total_possible / self.max_per_geo)
-        
             if step_size <= 0:
                 step_size = 1
 
@@ -181,7 +197,6 @@ class ModelIOPairBuilder:
                 if policy_history is None:
                     skipped["bad_policy"] += 1
                     continue
-                
                 if outcome_history is None:
                     skipped["bad_outcome"] += 1
                     continue
@@ -192,7 +207,26 @@ class ModelIOPairBuilder:
                 tgt_row = geo_df.loc[geo_df[date_col] == pred_date]
                 if tgt_row.empty:
                     continue
-                y = self._to_num(tgt_row[md.outcome_columns]).fillna(0.0).iloc[0].to_numpy(dtype=float)
+
+                # Raw target
+                y_raw = (
+                    self._to_num(tgt_row[md.outcome_columns])
+                    .fillna(0.0)
+                    .iloc[0]
+                    .to_numpy(dtype=float)
+                )
+
+                # Clipping/skipping
+                if upper_hard is not None:
+                    # If any outcome is insanely large → skip the pair entirely
+                    if np.any(y_raw > upper_hard):
+                        skipped["bad_target"] += 1
+                        continue
+
+                    # Otherwise clip softly
+                    y_clipped = np.minimum(y_raw, upper_clip)
+                else:
+                    y_clipped = y_raw
 
                 xin = ModelInputs(
                     geo_id=geo_id,
@@ -202,14 +236,14 @@ class ModelIOPairBuilder:
                     end_date=end_date,
                     horizon=self.horizon,
                 )
-                yout = ModelOutput(pred_date=pred_date, outcomes=y)
+                yout = ModelOutput(pred_date=pred_date, outcomes=y_clipped)
                 pairs.append((xin, yout))
 
         if verbose:
             tqdm.write(f"Finished building {len(pairs):,} training pairs.")
             tqdm.write(f"Pairs skipped due to bad policy: {skipped['bad_policy']}")
             tqdm.write(f"Pairs skipped due to bad outcome: {skipped['bad_outcome']}")
-
+            tqdm.write(f"Pairs skipped due to insane target values: {skipped['bad_target']}")
 
         return pairs
 

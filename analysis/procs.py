@@ -203,7 +203,7 @@ def handle_models(
         LinearWindowRegressor(),
         LinearDecayRidge(),
         SKMLPRegressor(),
-        TorchLSTMRegressor()
+        # TorchLSTMRegressor()
     ]
 
     results: List[Tuple[PredictorModel, Dict[str, Any], ModelPerformanceMetrics]] = []

@@ -2,6 +2,7 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Tuple, Optional
 import numpy as np
+from scipy import signal
 from sklearn.neural_network import MLPRegressor
 
 from analysis.predict import ModelInputs, ModelOutput, PredictorModel
@@ -11,7 +12,6 @@ from analysis.models.base import BasePredictorModel
 class SKMLPRegressor(BasePredictorModel):
     def __init__(self, **params: Any):
         super().__init__()
-        # defaults
         self.use_meta: bool = True
         self.hidden_layer_sizes = (128, 64)
         self.alpha = 1e-4
@@ -19,7 +19,12 @@ class SKMLPRegressor(BasePredictorModel):
         self.max_iter = 200
         self.random_state = 42
         self.batch_size = "auto"
-        # store defaults, then apply overrides
+
+        # filtering hyperparameters for Y targets
+        self.filter_type: str = "none"       # "none" | "ema" | "boxcar"
+        self.filter_alpha: float = 0.3       # for EMA
+        self.filter_window: int = 7          # for boxcar
+
         super().set_hyperparameters(
             use_meta=self.use_meta,
             hidden_layer_sizes=self.hidden_layer_sizes,
@@ -28,6 +33,9 @@ class SKMLPRegressor(BasePredictorModel):
             max_iter=self.max_iter,
             random_state=self.random_state,
             batch_size=self.batch_size,
+            filter_type=self.filter_type,
+            filter_alpha=self.filter_alpha,
+            filter_window=self.filter_window,
         )
         if params:
             self.set_hyperparameters(**params)
@@ -42,22 +50,63 @@ class SKMLPRegressor(BasePredictorModel):
         feats: List[np.ndarray] = []
         if self.use_meta:
             feats.append(np.asarray(x.meta, dtype=float).ravel())
-        feats.append(np.asarray(x.outcome_history, dtype=float).ravel())  # REQUIRED
-        feats.append(np.asarray(x.policy_history, dtype=float).ravel())  # REQUIRED
+        feats.append(np.asarray(x.outcome_history, dtype=float).ravel())
+        feats.append(np.asarray(x.policy_history, dtype=float).ravel())
         return np.concatenate(feats, axis=0)
 
-    def _stack_XY(
+    def _stack_XY_geo(
         self, batch: List[Tuple[ModelInputs, ModelOutput]]
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
         X = np.stack([self._featurize_one(x) for (x, _) in batch], axis=0)
         Y = np.stack([y.outcomes for (_, y) in batch], axis=0).astype(float)
-        return X, Y
+        geo_ids = [x.geo_id for (x, _) in batch]
+        return X, Y, geo_ids
+
+    def _filter_targets_1geo(self, Y_geo: np.ndarray) -> np.ndarray:
+        if Y_geo.size == 0:
+            return Y_geo
+
+        ftype = self.filter_type.lower()
+        if ftype == "none":
+            return Y_geo
+
+        if ftype == "ema":
+            alpha = max(1e-4, min(float(self.filter_alpha), 1.0))
+            b = [alpha]
+            a = [1.0, -(1.0 - alpha)]
+            return signal.lfilter(b, a, Y_geo, axis=0)
+
+        if ftype == "boxcar":
+            win = max(int(self.filter_window), 1)
+            win = min(win, Y_geo.shape[0])
+            b = np.ones(win) / float(win)
+            a = [1.0]
+            return signal.lfilter(b, a, Y_geo, axis=0)
+
+        return Y_geo
 
     def fit_batch(self, batch: List[Tuple[ModelInputs, ModelOutput]]) -> None:
         if not batch:
             return
-        X, Y = self._stack_XY(batch)
+
+        X, Y, geo_ids = self._stack_XY_geo(batch)
         self._out_dim = Y.shape[1]
+
+        if self.filter_type.lower() != "none":
+            Y_filt = np.empty_like(Y)
+            idx_by_geo: Dict[str, List[int]] = {}
+
+            for i, gid in enumerate(geo_ids):
+                idx_by_geo.setdefault(str(gid), []).append(i)
+
+            for gid, idxs in idx_by_geo.items():
+                idxs_arr = np.array(idxs)
+                Y_geo = Y[idxs_arr]
+                Y_geo_f = self._filter_targets_1geo(Y_geo)
+                Y_filt[idxs_arr] = Y_geo_f
+
+            Y = Y_filt
+
         self._mlp = MLPRegressor(
             hidden_layer_sizes=self.hidden_layer_sizes,
             alpha=self.alpha,
@@ -69,12 +118,10 @@ class SKMLPRegressor(BasePredictorModel):
             early_stopping=True,
             validation_fraction=0.1,
         )
-        # sklearn expects 1D or 2D target; for multi-output, pass (N, O)
         self._mlp.fit(X, Y)
 
     def predict(self, x: ModelInputs) -> ModelOutput:
         if self._mlp is None or self._out_dim is None:
-            # fallback: persistence
             y = x.outcome_history[-1, :].astype(float, copy=False)
             return ModelOutput(x.end_date + np.timedelta64(x.horizon, "D"), y)
         f = self._featurize_one(x)[None, :]
@@ -90,6 +137,9 @@ class SKMLPRegressor(BasePredictorModel):
             "max_iter",
             "random_state",
             "batch_size",
+            "filter_type",
+            "filter_alpha",
+            "filter_window",
         }
         for k, v in params.items():
             if k in known:
@@ -103,4 +153,7 @@ class SKMLPRegressor(BasePredictorModel):
             "alpha": [1e-5, 1e-4, 1e-3],
             "learning_rate_init": [1e-3, 3e-4],
             "max_iter": [200, 400],
+            "filter_type": ["none", "ema", "boxcar"],
+            "filter_alpha": [0.2, 0.5, 0.8],
+            "filter_window": [3, 7, 14],
         }

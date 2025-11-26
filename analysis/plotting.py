@@ -161,7 +161,7 @@ class ModelGrapher:
         plt.xlabel("Date")
         plt.ylabel(outcome_name)
         plt.legend(loc="best")
-        plt.title(f"{outcome_name} — {self.model.name()} [{split_name}]")
+        plt.title(f"{geo_id} - {outcome_name} - {self.model.name()} [{split_name}]")
 
         hp_text = self._as_compact_params(self.hyperparams)
         plt.gcf().text(0.99, 0.01, hp_text, ha="right", va="bottom", fontsize=8)
