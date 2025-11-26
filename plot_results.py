@@ -75,7 +75,7 @@ def collect_metrics(
             continue
 
         split_metrics = splits[split_name]
-        for metric_name in ["mae", "mse", "rmse", "mape"]:
+        for metric_name in ["mae", "mse", "rmse", "mape", "r2"]:
             if metric_name not in split_metrics:
                 print(
                     f"Warning: metric '{metric_name}' not found in {fp} for split {split_name}"
@@ -90,7 +90,7 @@ def collect_metrics(
     return metrics_by_model
 
 
-def plot_surface_with_min(
+def plot_surface(
     points: List[MetricPoint],
     model: str,
     cluster_name: str,
@@ -106,43 +106,59 @@ def plot_surface_with_min(
 
     xs = np.array([p[0] for p in points], dtype=float)  # window_size
     ys = np.array([p[1] for p in points], dtype=float)  # geo_max
-    zs = np.array([p[2] for p in points], dtype=float)  # metric value
+    zs = np.array([p[2] for p in points], dtype=float)  # metric value (true scale)
 
-    # Find minimum configuration
-    min_idx = np.argmin(zs)
-    x_min, y_min, z_min = xs[min_idx], ys[min_idx], zs[min_idx]
+    # Choose critical index: min for normal metrics, max for r2
+    if metric_name == "r2":
+        crit_idx = np.argmax(zs)
+        crit_label = "Maximum"
+    else:
+        crit_idx = np.argmin(zs)
+        crit_label = "Minimum"
+
+    x_crit, y_crit, z_crit = xs[crit_idx], ys[crit_idx], zs[crit_idx]
+
+    # For r2, transform the plot
+    zs_plot = zs.copy()
+    if metric_name == "r2":
+        gamma = 0.2
+        zs_plot = zs ** gamma
+        z_crit_plot = z_crit ** gamma
+    else:
+        z_crit_plot = z_crit
 
     fig = plt.figure(figsize=(9, 7))
     ax = fig.add_subplot(111, projection="3d")
 
     if len(points) >= 3:
-        # Triangulated surface
-        surf = ax.plot_trisurf(xs, ys, zs, cmap="viridis", alpha=0.8)
+        # Triangulated surface using transformed Z
+        surf = ax.plot_trisurf(xs, ys, zs_plot, cmap="viridis", alpha=0.8)
         fig.colorbar(surf, ax=ax, shrink=0.6, pad=0.1, label=metric_name)
     else:
         # Not enough points for a surface – fallback to scatter
         print(
             f"Not enough points for surface for {model} / {cluster_name} / {metric_name}, using scatter."
         )
-        sc = ax.scatter(xs, ys, zs, c=zs)
+        sc = ax.scatter(xs, ys, zs_plot, c=zs_plot)
         fig.colorbar(sc, ax=ax, shrink=0.6, pad=0.1, label=metric_name)
 
-    # Highlight minimum configuration
+
     ax.scatter(
-        [x_min],
-        [y_min],
-        [z_min],
+        [x_crit],
+        [y_crit],
+        [z_crit_plot],
         color="red",
         s=60,
         marker="o",
         depthshade=False,
-        label="Minimum",
+        label=crit_label,
     )
 
+    # Project down to the base of the Z axis for readability
     z_low = ax.get_zlim()[0]
     ax.scatter(
-        [x_min],
-        [y_min],
+        [x_crit],
+        [y_crit],
         [z_low],
         color="red",
         s=30,
@@ -151,17 +167,21 @@ def plot_surface_with_min(
     )
 
     ax.text(
-        x_min,
-        y_min,
-        z_min,
-        f"min\nw={x_min:g}\ngeo={y_min:g}\n{metric_name}={z_min:.3g}",
+        x_crit,
+        y_crit,
+        z_crit_plot,
+        f"{'max' if metric_name == 'r2' else 'min'}\n"
+        f"w={x_crit:g}\ngeo={y_crit:g}\n{metric_name}={z_crit:.3g}",
         fontsize=8,
         color="red",
     )
 
     ax.set_xlabel("Window Size")
     ax.set_ylabel("Geo Max")
-    ax.set_zlabel(f"{metric_name.upper()} ({split_name})")
+    ax.set_zlabel(
+        f"{metric_name.upper()} ({split_name})"
+        + (" (γ=0.2)" if metric_name == "r2" else "")
+    )
 
     ax.set_title(f"{model} | {cluster_name} | {metric_name.upper()} ({split_name})")
     ax.legend(loc="upper right")
@@ -172,8 +192,10 @@ def plot_surface_with_min(
     plt.close(fig)
 
     print(
-        f"Saved: {output_path} (min at window={x_min:g}, geo_max={y_min:g}, {metric_name}={z_min:.4g})"
+        f"Saved: {output_path} ({crit_label.lower()} at window={x_crit:g}, "
+        f"geo_max={y_crit:g}, {metric_name}={z_crit:.4g})"
     )
+
 
 
 def main():
@@ -208,7 +230,7 @@ def main():
             for metric_name, points in metric_dict.items():
                 fname = f"{model}_{cluster_name}_{metric_name}.png"
                 output_path = os.path.join(base_dir, fname)
-                plot_surface_with_min(
+                plot_surface(
                     points,
                     model=model,
                     cluster_name=cluster_name,
