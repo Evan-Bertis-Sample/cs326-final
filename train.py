@@ -121,7 +121,7 @@ def main():
         window_sizes = [14]
         geo_max_values = [100]
     else:
-        window_sizes = range(3, 41, 5)
+        window_sizes = range(3, 21, 5)
         geo_max_values = range(100, 599, 100)
 
     # Best-per-Geo accumulator across all (cluster, window, geo_max) runs

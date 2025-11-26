@@ -202,7 +202,7 @@ def handle_models(
         # PersistenceBaseline(),
         LinearWindowRegressor(),
         LinearDecayRidge(),
-        SKMLPRegressor(),
+        # SKMLPRegressor(),
         # TorchLSTMRegressor()
     ]
 
