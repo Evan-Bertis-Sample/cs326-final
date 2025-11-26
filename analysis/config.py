@@ -82,6 +82,7 @@ class AnalysisConfig:
 
     @classmethod
     def load(cls, file_path: Union[str, os.PathLike, None] = "config.toml") -> None:
+        print("Loading config...")
         cls._settings = AnalysisSettings.load(file_path=file_path)
 
     @classmethod

@@ -7,6 +7,7 @@ import json
 import hashlib
 from typing import Dict, Any, Tuple
 from joblib import dump
+import os
 
 from analysis.config import AnalysisConfig
 from analysis.cache import Cache, CacheConfig
@@ -38,7 +39,7 @@ def parse_args():
     )
     p.add_argument(
         "--clusters-dir",
-        default="figures/clusters",
+        default="data/clusters",
         help="Directory containing cluster files (one GeoID per line).",
     )
     p.add_argument(
@@ -53,7 +54,7 @@ def parse_args():
 
 
 def init_cache(args):
-    cache_root = Path(AnalysisConfig.paths.output) / ".cache"
+    cache_root = AnalysisConfig.paths.cache
     Cache.init(
         CacheConfig(root=cache_root, compress=3, default_verbose=args.verbose_cache)
     )

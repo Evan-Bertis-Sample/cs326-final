@@ -1,5 +1,5 @@
 [paths]
-data = "figures/oxcgrt_tidy.csv"
+data = "data/oxcgrt_tidy.csv"
 output = "models/"
 cache = "cache/"
 

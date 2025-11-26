@@ -13,7 +13,7 @@ from analysis.oxcgrt_data import OxCGRTData
 
 @dataclass(frozen=True)
 class ModelInputs:
-    geo_id : str
+    geo_id: str
     meta: np.ndarray  # shape (M,)
     policy_history: np.ndarray  # shape (W, P)
     outcome_history: np.ndarray  # shape (W, O)
@@ -44,6 +44,7 @@ class ModelPerformanceMetrics:
     r2: float
     outcome_diffs: List[ModelError]
 
+
 class PredictorModel(Protocol):
     def name(self) -> str: ...
     def fit_batch(self, batch: List[Tuple["ModelInputs", "ModelOutput"]]) -> None: ...
@@ -60,7 +61,7 @@ class ModelIOPairBuilder:
         horizon: int = 1,
         max_per_geo: Optional[int] = None,
         policy_missing: str = "ffill_then_zero",  # "ffill_then_zero" | "zero" | "drop"
-        outcome_missing: str = "ffill",           # "ffill" | "drop"
+        outcome_missing: str = "ffill",  # "ffill" | "drop"
         verbose: bool = True,
     ):
         self.window = window_size
@@ -69,7 +70,7 @@ class ModelIOPairBuilder:
         self.policy_missing = policy_missing
         self.outcome_missing = outcome_missing
         self.verbose = verbose
-        
+
     def _to_num(self, df: pd.DataFrame) -> pd.DataFrame:
         return df.apply(pd.to_numeric, errors="coerce")
 
@@ -80,18 +81,17 @@ class ModelIOPairBuilder:
         h = hashlib.sha256(str(s).encode("utf-8")).hexdigest()
         return float(int(h[:12], 16))  # compact to float range
 
-
     def _date_to_ordinal(self, d: pd.Series) -> np.ndarray:
         d = pd.to_datetime(d, errors="coerce")
-        return d.dt.date.map(lambda x: x.toordinal() if pd.notna(x) else 0).to_numpy(dtype=float)
-
+        return d.dt.date.map(lambda x: x.toordinal() if pd.notna(x) else 0).to_numpy(
+            dtype=float
+        )
 
     def _ensure_dt(self, df: pd.DataFrame, col: str) -> pd.DataFrame:
         if not pd.api.types.is_datetime64_any_dtype(df[col]):
             df = df.copy()
             df[col] = pd.to_datetime(df[col], errors="coerce")
         return df
-
 
     def _encode_meta(self, df: pd.DataFrame) -> np.ndarray:
         # one numeric vector per-geo using first non-null value per metadata column
@@ -107,7 +107,6 @@ class ModelIOPairBuilder:
                 out.append(self._hash_str("" if pd.isna(v) else str(v)))
         return np.asarray(out, dtype=float)
 
-
     def _encode_policies(self, df: pd.DataFrame, start: int, end: int) -> np.ndarray:
         cols = AnalysisConfig.metadata.policy_columns
         date_col = AnalysisConfig.metadata.date_column
@@ -115,7 +114,6 @@ class ModelIOPairBuilder:
         # keep only policy columns (numeric 0/1, missing→0)
         pol = self._to_num(win[cols]).fillna(0.0).to_numpy(dtype=float)
         return pol  # shape (W, P)
-
 
     def _encode_outcomes(self, df: pd.DataFrame, start: int, end: int) -> np.ndarray:
         cols = AnalysisConfig.metadata.outcome_columns
@@ -137,15 +135,20 @@ class ModelIOPairBuilder:
         assert out.shape[0] == (end - start)
         return out
 
-
-    def get_pairs(self, data: OxCGRTData, verbose: bool = True) -> List[Tuple[ModelInputs, ModelOutput]]:
+    def get_pairs(
+        self, data: OxCGRTData, verbose: bool = True
+    ) -> List[Tuple[ModelInputs, ModelOutput]]:
         pairs: List[Tuple[ModelInputs, ModelOutput]] = []
 
         md = AnalysisConfig.metadata
         date_col = md.date_column
 
         geo_ids = data.geo_id_strings(unique=True)
-        geo_iter = tqdm(geo_ids, desc="Building training pairs", unit="region") if verbose else geo_ids
+        geo_iter = (
+            tqdm(geo_ids, desc="Building training pairs", unit="region")
+            if verbose
+            else geo_ids
+        )
 
         skipped = {
             "bad_policy": 0,
@@ -153,8 +156,8 @@ class ModelIOPairBuilder:
             "bad_target": 0,
         }
 
-        clip_percentile = 99.5      # upper bound
-        clip_factor = 2.0           # allow x2 wiggle room before skipping
+        clip_percentile = 99.5  # upper bound
+        clip_factor = 2.0  # allow x2 wiggle room before skipping
 
         for geo_id in geo_iter:
             geo_df = data.get_timeseries(str(geo_id))
@@ -171,13 +174,17 @@ class ModelIOPairBuilder:
             # Compute per-geo outcome clipping thresholds (vector of shape O,)
             outcome_df = self._to_num(geo_df[md.outcome_columns]).fillna(0.0)
             if len(outcome_df) > 0:
-                upper_clip = np.percentile(outcome_df.to_numpy(dtype=float), clip_percentile, axis=0)
+                upper_clip = np.percentile(
+                    outcome_df.to_numpy(dtype=float), clip_percentile, axis=0
+                )
                 upper_hard = upper_clip * clip_factor
             else:
                 upper_clip = None
                 upper_hard = None
 
-            n = len(geo_df)
+            # kind of a hack, but to just get rid of the last bit of data, we remove
+            # like a month
+            n = len(geo_df) - 1000
             step_size = 1
             if self.max_per_geo is not None and self.max_per_geo > 0:
                 total_possible = n - self.window - self.horizon + 1
@@ -187,7 +194,9 @@ class ModelIOPairBuilder:
 
             inner_iter = range(0, n - self.window - self.horizon + 1, step_size)
             if verbose:
-                inner_iter = tqdm(inner_iter, leave=False, desc=f"{geo_id[:10]}...", unit="window")
+                inner_iter = tqdm(
+                    inner_iter, leave=False, desc=f"{geo_id[:10]}...", unit="window"
+                )
 
             for i in inner_iter:
                 start, end = i, i + self.window
@@ -243,9 +252,12 @@ class ModelIOPairBuilder:
             tqdm.write(f"Finished building {len(pairs):,} training pairs.")
             tqdm.write(f"Pairs skipped due to bad policy: {skipped['bad_policy']}")
             tqdm.write(f"Pairs skipped due to bad outcome: {skipped['bad_outcome']}")
-            tqdm.write(f"Pairs skipped due to insane target values: {skipped['bad_target']}")
+            tqdm.write(
+                f"Pairs skipped due to insane target values: {skipped['bad_target']}"
+            )
 
         return pairs
+
 
 class OutcomePredictor:
     def __init__(self, model: PredictorModel):
@@ -256,7 +268,6 @@ class OutcomePredictor:
 
     def predict(self, inputs: ModelInputs) -> ModelOutput:
         return self.model.predict(inputs)
-
 
     def evaluate(
         self, tests: List[Tuple[ModelInputs, ModelOutput]]
@@ -320,14 +331,14 @@ class OutcomePredictor:
 
             diff = yj_p - yj_t
             mae_j = float(np.mean(np.abs(diff)))
-            mse_j = float(np.mean(diff ** 2))
+            mse_j = float(np.mean(diff**2))
             rmse_j = float(np.sqrt(mse_j))
 
             # avoid divide-by-zero for MAPE
             denom = np.maximum(np.abs(yj_t), 1e-8)
             mape_j = float(np.mean(np.abs(diff / denom) * 100.0))
 
-            ss_res_j = float(np.sum(diff ** 2))
+            ss_res_j = float(np.sum(diff**2))
             ss_tot_j = float(np.sum((yj_t - np.mean(yj_t)) ** 2))
             r2_j = float(1.0 - ss_res_j / ss_tot_j) if ss_tot_j > 0 else np.nan
 
