@@ -6,35 +6,22 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import matplotlib
-matplotlib.use("Agg") 
+
+matplotlib.use("Agg")  # non-interactive backend for saving to files
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D 
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401  (required for 3D)
 
 
-# Type aliases
-MetricPoint = Tuple[float, float, float]  # (window_size, geo_max, value)
+# Type alias: (window_size, geo_max, metric_value)
+MetricPoint = Tuple[float, float, float]
 
 
 def find_results_files(root: str) -> List[str]:
     results_files = []
     for dirpath, dirnames, filenames in os.walk(root):
         if "results.json" in filenames:
-            parts = dirpath.split(os.sep)
-            if any(p.startswith("window_") for p in parts) and any(
-                p.startswith("geo_max_") for p in parts
-            ):
-                results_files.append(os.path.join(dirpath, "results.json"))
+            results_files.append(os.path.join(dirpath, "results.json"))
     return results_files
-
-
-def parse_config_from_path(path: str, root: str) -> Tuple[str, str]:
-    rel = os.path.relpath(path, root)
-    parts = rel.split(os.sep)
-    if len(parts) < 5:
-        raise ValueError(f"Unexpected path layout for {path}")
-    model_type = parts[0]
-    cluster_name = parts[1]
-    return model_type, cluster_name
 
 
 def collect_metrics(
@@ -54,18 +41,17 @@ def collect_metrics(
 
     for fp in results_files:
         try:
-            model_type, cluster_name = parse_config_from_path(
-                os.path.dirname(fp), root
-            )
-        except ValueError as e:
-            print(f"Skipping {fp}: {e}")
-            continue
-
-        try:
             with open(fp, "r") as f:
                 data = json.load(f)
         except Exception as e:
             print(f"Failed to load {fp}: {e}")
+            continue
+
+        model = data.get("model")
+        cluster_name = data.get("cluster_name")
+
+        if model is None or cluster_name is None:
+            print(f"Skipping {fp}: missing 'model' or 'cluster_name' in JSON.")
             continue
 
         # Prefer top-level window_size / geo_max, fall back to hyperparameters
@@ -80,12 +66,12 @@ def collect_metrics(
                 geo_max = hp.get("geo_max")
 
         if window_size is None or geo_max is None:
-            print(f"Skipping {fp}: missing window_size or geo_max")
+            print(f"Skipping {fp}: missing window_size or geo_max in JSON.")
             continue
 
         splits = data.get("splits", {})
         if split_name not in splits:
-            print(f"Skipping {fp}: split '{split_name}' not found")
+            print(f"Skipping {fp}: split '{split_name}' not found in JSON.")
             continue
 
         split_metrics = splits[split_name]
@@ -97,7 +83,7 @@ def collect_metrics(
                 continue
 
             value = split_metrics[metric_name]
-            metrics_by_model[model_type][cluster_name][metric_name].append(
+            metrics_by_model[model][cluster_name][metric_name].append(
                 (float(window_size), float(geo_max), float(value))
             )
 
@@ -106,7 +92,7 @@ def collect_metrics(
 
 def plot_surface_with_min(
     points: List[MetricPoint],
-    model_type: str,
+    model: str,
     cluster_name: str,
     metric_name: str,
     split_name: str,
@@ -114,15 +100,9 @@ def plot_surface_with_min(
 ) -> None:
     if not points:
         print(
-            f"No points to plot for {model_type} / {cluster_name} / {metric_name}, skipping."
+            f"No points to plot for {model} / {cluster_name} / {metric_name}, skipping."
         )
         return
-
-    if len(points) < 3:
-        # Need at least 3 points for a triangulated surface; fall back to scatter
-        print(
-            f"Not enough points for surface for {model_type} / {cluster_name} / {metric_name}, using scatter."
-        )
 
     xs = np.array([p[0] for p in points], dtype=float)  # window_size
     ys = np.array([p[1] for p in points], dtype=float)  # geo_max
@@ -140,7 +120,10 @@ def plot_surface_with_min(
         surf = ax.plot_trisurf(xs, ys, zs, cmap="viridis", alpha=0.8)
         fig.colorbar(surf, ax=ax, shrink=0.6, pad=0.1, label=metric_name)
     else:
-        # Fallback scatter
+        # Not enough points for a surface – fallback to scatter
+        print(
+            f"Not enough points for surface for {model} / {cluster_name} / {metric_name}, using scatter."
+        )
         sc = ax.scatter(xs, ys, zs, c=zs)
         fig.colorbar(sc, ax=ax, shrink=0.6, pad=0.1, label=metric_name)
 
@@ -156,11 +139,11 @@ def plot_surface_with_min(
         label="Minimum",
     )
 
-    # Optional: project minimum point down to x-y plane for easier reading
+    z_low = ax.get_zlim()[0]
     ax.scatter(
         [x_min],
         [y_min],
-        [ax.get_zlim()[0]],
+        [z_low],
         color="red",
         s=30,
         marker="x",
@@ -180,9 +163,7 @@ def plot_surface_with_min(
     ax.set_ylabel("Geo Max")
     ax.set_zlabel(f"{metric_name.upper()} ({split_name})")
 
-    ax.set_title(f"{model_type} | {cluster_name} | {metric_name.upper()} ({split_name})")
-
-    # Legend for the min marker
+    ax.set_title(f"{model} | {cluster_name} | {metric_name.upper()} ({split_name})")
     ax.legend(loc="upper right")
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -197,13 +178,13 @@ def plot_surface_with_min(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Plot 3D surface metric graphs over window_size and geo_max."
+        description="Plot 3D surface metric graphs over window_size and geo_max, using only data from results.json."
     )
     parser.add_argument(
         "--root",
         type=str,
         default=".",
-        help="Root directory containing model_type folders (default: current directory).",
+        help="Root directory where results.json files live (searched recursively).",
     )
     parser.add_argument(
         "--split",
@@ -220,14 +201,16 @@ def main():
         print("No metrics collected. Exiting.")
         return
 
-    for model_type, clusters in metrics_by_model.items():
+    base_dir = os.path.join(args.root, "results")
+
+    for model, clusters in metrics_by_model.items():
         for cluster_name, metric_dict in clusters.items():
             for metric_name, points in metric_dict.items():
-                fname = f"{model_type}_{metric_name}.png"
-                output_path = os.path.join(args.root, model_type, cluster_name, fname)
+                fname = f"{model}_{cluster_name}_{metric_name}.png"
+                output_path = os.path.join(base_dir, fname)
                 plot_surface_with_min(
                     points,
-                    model_type=model_type,
+                    model=model,
                     cluster_name=cluster_name,
                     metric_name=metric_name,
                     split_name=args.split,
