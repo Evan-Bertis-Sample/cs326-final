@@ -200,8 +200,8 @@ def handle_models(
 
     models_to_train: List[PredictorModel] = [
         # PersistenceBaseline(),
-        # LinearWindowRegressor(),
-        # LinearDecayRidge(),
+        LinearWindowRegressor(),
+        LinearDecayRidge(),
         SKMLPRegressor(),
         # TorchLSTMRegressor()
     ]
