@@ -1,0 +1,9 @@
+{
+  "l2": 0.001,
+  "use_meta": true,
+  "filter_type": "none",
+  "filter_alpha": 0.2,
+  "filter_window": 3,
+  "geo_max": 400,
+  "window_size": 8
+}
