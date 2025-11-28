@@ -51,7 +51,7 @@ class RelaxationAgent(PolicyAgent):
     ) -> np.ndarray:
         # Simple: scale all policy entries down, but not below 0
         new_policy = baseline_policy.astype(float) * self.scale
-        new_policy = np.clip(new_policy, 0.0, None)
+        new_policy = np.ones(len(baseline_policy))
         return new_policy 
 
 
