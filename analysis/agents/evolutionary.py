@@ -1,12 +1,12 @@
-# analysis/agents/evolutionary_policy.py
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence, Mapping, Any, Iterable, List, Tuple
+from typing import Sequence, List, Tuple
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from joblib import Parallel, delayed  # NEW
 
 from analysis.rl import RLSimulator, PolicyAgent
 from analysis.config import AnalysisConfig
@@ -28,7 +28,9 @@ class DeltaPolicyAgent(PolicyAgent):
                 f"deltas length {self.deltas.shape[0]} != "
                 f"len(policy_columns)={len(self.policy_columns)}"
             )
-        if self.max_levels is not None and self.max_levels.shape[0] != len(self.policy_columns):
+        if self.max_levels is not None and self.max_levels.shape[0] != len(
+            self.policy_columns
+        ):
             raise ValueError(
                 f"max_levels length {self.max_levels.shape[0]} != "
                 f"len(policy_columns)={len(self.policy_columns)}"
@@ -39,7 +41,6 @@ class DeltaPolicyAgent(PolicyAgent):
         window_df: pd.DataFrame,
         baseline_policy: np.ndarray,
     ) -> np.ndarray:
-        # baseline_policy is usually integer-coded policies.
         base = baseline_policy.astype(float)
         if base.shape[0] != self.deltas.shape[0]:
             raise ValueError(
@@ -48,17 +49,13 @@ class DeltaPolicyAgent(PolicyAgent):
             )
 
         new_policy = base + self.deltas
-
-        # Clamp at >= 0
         new_policy = np.maximum(new_policy, 0.0)
 
-        # Optional clamp to max per column
         if self.max_levels is not None:
             new_policy = np.minimum(new_policy, self.max_levels)
 
-        # Round to nearest int to stay on the ordinal grid
         return np.rint(new_policy).astype(float)
-    
+
 
 @dataclass
 class EvolutionaryPolicyTrainer:
@@ -68,6 +65,7 @@ class EvolutionaryPolicyTrainer:
     n_steps: int
     policy_columns: Sequence[str]
     max_levels: np.ndarray | None = None
+    n_jobs: int = 1  # NEW: number of parallel workers (1 = no parallelism)
 
     def __post_init__(self) -> None:
         self.policy_columns = tuple(self.policy_columns)
@@ -91,18 +89,43 @@ class EvolutionaryPolicyTrainer:
                 agent=agent,
                 start_index=self.start_index,
                 n_steps=self.n_steps,
-                verbose=False
+                verbose=False,
             )
-            # Use the simulated reward (under the agent's policy)
             r = np.array([s.reward_simulated for s in ep.steps], dtype=float)
             if np.all(np.isnan(r)):
                 continue
             rewards.append(float(np.nanmean(r)))
 
         if not rewards:
-            return -np.inf  # everything NaN / invalid
+            return -np.inf
 
         return float(np.mean(rewards))
+
+    def _eval_population_parallel(
+        self, pop: np.ndarray, pop_size: int, verbose: bool
+    ) -> np.ndarray:
+        if verbose:
+            iterator = tqdm(range(pop_size), desc="Evaluating", unit="agents")
+        else:
+            iterator = range(pop_size)
+
+        results = Parallel(n_jobs=self.n_jobs, prefer="threads")(
+            delayed(self.evaluate_params)(pop[i]) for i in iterator
+        )
+        return np.array(results, dtype=float)
+
+    def _eval_population_sequential(
+        self, pop: np.ndarray, pop_size: int, verbose: bool
+    ) -> np.ndarray:
+        fitness = np.empty(pop_size, dtype=float)
+        iterator = (
+            tqdm(range(pop_size), desc="Evaluating", unit="agents")
+            if verbose
+            else range(pop_size)
+        )
+        for i in iterator:
+            fitness[i] = self.evaluate_params(pop[i])
+        return fitness
 
     def train(
         self,
@@ -117,20 +140,16 @@ class EvolutionaryPolicyTrainer:
         rng = np.random.default_rng(seed)
         dim = len(self.policy_columns)
 
-        # Population: pop_size x dim, initialised near 0
         pop = rng.normal(loc=0.0, scale=init_std, size=(pop_size, dim))
-
         n_elite = max(1, int(pop_size * elite_frac))
 
         history_rows: List[dict] = []
 
-    
-        for gen in tqdm(range(n_generations), desc="Training", unit="generations"):
-            fitness = np.empty(pop_size, dtype=float)
-
-            # Evaluate each individual
-            for i in tqdm(range(pop_size), desc="Evaluating", unit="agents"):
-                fitness[i] = self.evaluate_params(pop[i])
+        for gen in range(n_generations):
+            if self.n_jobs is not None and self.n_jobs != 1:
+                fitness = self._eval_population_parallel(pop, pop_size, verbose)
+            else:
+                fitness = self._eval_population_sequential(pop, pop_size, verbose)
 
             # Sort by descending fitness
             idx = np.argsort(fitness)[::-1]
@@ -149,16 +168,11 @@ class EvolutionaryPolicyTrainer:
             )
 
             if verbose:
-                print(
-                    f"[Gen {gen:03d}] best={best_fit:.4f}, "
-                    f"mean={mean_fit:.4f}"
-                )
+                print(f"[Gen {gen:03d}] best={best_fit:.4f}, " f"mean={mean_fit:.4f}")
 
-            # Elitism: keep top n_elite, refill the rest with mutated copies
             elites = pop[:n_elite]
-            new_pop = [elites[0]]  # always keep the single best unchanged
+            new_pop = [elites[0]]  # keep single best unchanged
 
-            # Sample parents from elites for the rest
             while len(new_pop) < pop_size:
                 parent_idx = rng.integers(low=0, high=n_elite)
                 parent = elites[parent_idx]
@@ -168,7 +182,13 @@ class EvolutionaryPolicyTrainer:
             pop = np.stack(new_pop, axis=0)
 
         # Final evaluation to pick best individual
-        final_fitness = np.array([self.evaluate_params(p) for p in pop], dtype=float)
+        if self.n_jobs is not None and self.n_jobs != 1:
+            final_fitness = self._eval_population_parallel(pop, pop_size, verbose=False)
+        else:
+            final_fitness = self._eval_population_sequential(
+                pop, pop_size, verbose=False
+            )
+
         best_idx = int(np.argmax(final_fitness))
         best_deltas = pop[best_idx]
 

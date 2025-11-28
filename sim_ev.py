@@ -8,6 +8,7 @@ from analysis.fwd import ModelForwarder
 from analysis.rl import RLSimulator
 from analysis.agents.evolutionary import EvolutionaryPolicyTrainer
 from analysis.rl_eval import plot_outcomes, plot_reward, plot_differences
+from analysis.cache import Cache, CacheConfig
 import pandas as pd
 import argparse
 
@@ -48,11 +49,15 @@ def parse_args() -> argparse.Namespace:
     )
     return p.parse_args()
 
-
 def main() -> None:
     args = parse_args()
     cfg = AnalysisConfig
     data_path = cfg.paths.data
+
+    cache_root = AnalysisConfig.paths.cache
+    Cache.init(
+        CacheConfig(root=cache_root, compress=3)
+    )
 
     print(f"Loading OxCGRT data from {data_path}...")
     data = OxCGRTData(data_path)
@@ -66,7 +71,7 @@ def main() -> None:
 
     max_levels = None
 
-    train_geos = ["USA"]
+    train_geos = args.geos
 
     trainer = EvolutionaryPolicyTrainer(
         sim=sim,
@@ -75,7 +80,12 @@ def main() -> None:
         n_steps=args.steps,
         policy_columns=policy_cols,
         max_levels=max_levels,
+        n_jobs=8
     )
+
+    # i'd like to call 
+    # Cache.call(train)
+    # to get the results
 
     best_agent, history_df = trainer.train(
         n_generations=args.generations,
@@ -90,7 +100,7 @@ def main() -> None:
 
     history_df.to_csv(out_dir / "evolution_history.csv", index=False)
 
-    eval_geos = train_geos
+    eval_geos = args.geos
 
     for geo in eval_geos:
         print(f"Evaluating best evolutionary agent on {geo}")
@@ -105,6 +115,10 @@ def main() -> None:
         plot_outcomes(ep, agent_name, output_dir=geo_dir)
         plot_reward(ep, agent_name, output_dir=geo_dir)
         plot_differences(ep, agent_name, output_dir=geo_dir)
+
+    
+    # need something to plot the decisions made by the agent
+
 
 
 if __name__ == "__main__":
