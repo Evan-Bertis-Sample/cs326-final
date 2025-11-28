@@ -69,6 +69,7 @@ class RewardFunction:
         w_deaths: float = 1.0,
         w_cases: float = 0.1,
         w_strict: float = 0.05,
+        neg_outcome_penalty: float = 1e5
     ):
         self.w_deaths = float(w_deaths)
         self.w_cases = float(w_cases)
@@ -77,6 +78,7 @@ class RewardFunction:
         md = AnalysisConfig.metadata
         self.outcome_cols = md.outcome_columns
         self.policy_cols = md.policy_columns
+        self.neg_outcome_penalty = neg_outcome_penalty
 
         # indices of outcomes
         self.idx_cases = (
@@ -101,23 +103,37 @@ class RewardFunction:
         ]
 
     def __call__(self, y_pred: np.ndarray, policy_vec: np.ndarray) -> float:
-        # outcomes
-        cases = float(y_pred[self.idx_cases]) if self.idx_cases < len(y_pred) else 0.0
-        deaths = float(y_pred[self.idx_deaths]) if self.idx_deaths < len(y_pred) else 0.0
+            y_pred = np.asarray(y_pred, dtype=float)
 
-        if self.strict_indices:
-            strict_vals = policy_vec[self.strict_indices].astype(float)
-            strict_mean = float(np.mean(strict_vals)) / 100.0 
-        else:
-            strict_mean = 0.0
+            neg_mask = y_pred < 0.0
+            penalty = 0.0
+            if np.any(neg_mask):
+                # total magnitude of invalid predictions
+                neg_magnitude = float(np.sum(np.abs(y_pred[neg_mask])))
+                penalty = self.neg_outcome_penalty * neg_magnitude
 
-        # Negative cost, so reward is larger when deaths/cases/strictness are smaller
-        cost = (
-            self.w_deaths * deaths
-            + self.w_cases * cases
-            + self.w_strict * strict_mean
-        )
-        return -cost
+                # clip so rest of reward sees valid outcomes
+                y_pred = np.maximum(y_pred, 0.0)
+
+            # outcomes (>= 0)
+            cases = float(y_pred[self.idx_cases]) if self.idx_cases < len(y_pred) else 0.0
+            deaths = float(y_pred[self.idx_deaths]) if self.idx_deaths < len(y_pred) else 0.0
+
+            # strictness term
+            if self.strict_indices:
+                strict_vals = policy_vec[self.strict_indices].astype(float)
+                strict_mean = float(np.mean(strict_vals)) / 100.0
+            else:
+                strict_mean = 0.0
+
+            # Negative cost -> reward = -cost
+            cost = (
+                self.w_deaths * deaths
+                + self.w_cases * cases
+                + self.w_strict * strict_mean
+                + penalty
+            )
+            return -cost
 
 
 class RLSimulator:
@@ -132,13 +148,20 @@ class RLSimulator:
         self.date_col = md.date_column
         self.geoid_col = getattr(AnalysisConfig.metadata, "geo_id_column", "GeoID")
 
+        # Detect if dayssince2020 accidentally got treated as a "policy" dim
+        self._dayssince_idx: int | None = None
+        for idx, col in enumerate(self.policy_cols):
+            if col.lower() == "dayssince2020":
+                self._dayssince_idx = idx
+                break
+
     def simulate_episode(
         self,
         geo_id: str,
         agent: PolicyAgent,
         start_index: int,
         n_steps: int,
-        verbose : bool = True
+        verbose: bool = True,
     ) -> EpisodeResult:
         predictor, hp = self.forwarder.get_predictor_for_geo(geo_id)
 
@@ -158,12 +181,11 @@ class RLSimulator:
 
         steps: List[StepResult] = []
 
-        iter = range(start_index, last_index + 1)
-    
+        it = range(start_index, last_index + 1)
         if verbose:
-            iter = tqdm(iter, desc="Simulating", unit="day")
-    
-        for idx in iter:
+            it = tqdm(it, desc="Simulating", unit="day")
+
+        for idx in it:
             end_index = idx - 1  # last day in the window
             if end_index < window_size - 1:
                 continue
@@ -176,27 +198,34 @@ class RLSimulator:
                 horizon=horizon,
             )
 
-            # Baseline policy: last day in window
-            baseline_policy = (
-                window_df[self.policy_cols]
-                .tail(1)
-                .iloc[0]
-            )
-
+            # Baseline policy: last day in window, coerced to numeric
             baseline_policy = (
                 pd.to_numeric(
                     window_df[self.policy_cols].iloc[-1],
-                    errors="coerce"     # produces NaN for strings like "70-74 yrs"
+                    errors="coerce",   # handles things like "70-74 yrs"
                 )
-                .fillna(0.0)             # turn all NaNs into 0.0
+                .fillna(0.0)
                 .to_numpy(dtype=float)
             )
 
             # Agent chooses action (new policy for last day)
-            policy_action = agent.act(window_df=window_df, baseline_policy=baseline_policy)
+            policy_action = agent.act(
+                window_df=window_df,
+                baseline_policy=baseline_policy,
+            )
+
+            # prevent agent from changing dayssince2020
+            if self._dayssince_idx is not None:
+                true_day_val = baseline_policy[self._dayssince_idx]
+                # Ensure both baseline and action use the *actual* day
+                baseline_policy[self._dayssince_idx] = true_day_val
+                policy_action[self._dayssince_idx] = true_day_val
 
             # Override last policy row and run prediction
-            modified_inputs = self.forwarder.apply_policy_override(inputs, policy_action)
+            modified_inputs = self.forwarder.apply_policy_override(
+                inputs,
+                policy_action,
+            )
             output: ModelOutput = predictor.predict(modified_inputs)
 
             pred_date = output.pred_date
@@ -211,14 +240,18 @@ class RLSimulator:
                     .to_numpy(dtype=float)
                 )
             else:
-                print("No y_true!")
+                if verbose:
+                    print("No y_true!")
                 y_true = np.full_like(y_pred, np.nan, dtype=float)
 
             reward_sim = self.reward_fn(y_pred=y_pred, policy_vec=policy_action)
             if np.all(np.isnan(y_true)):
                 reward_actual = np.nan
             else:
-                reward_actual = self.reward_fn(y_pred=y_true, policy_vec=baseline_policy)
+                reward_actual = self.reward_fn(
+                    y_pred=y_true,
+                    policy_vec=baseline_policy,
+                )
 
             steps.append(
                 StepResult(
@@ -228,7 +261,7 @@ class RLSimulator:
                     policy_baseline=baseline_policy,
                     policy_action=policy_action,
                     reward_simulated=reward_sim,
-                    reward_actual=reward_actual
+                    reward_actual=reward_actual,
                 )
             )
 
