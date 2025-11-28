@@ -77,6 +77,67 @@ def plot_outcomes(
         fig.savefig(out_path, dpi=200)
         plt.close(fig)
 
+def plot_differences(
+    ep: EpisodeResult,
+    output_dir: Path,
+    focus_columns: Optional[List[str]] = None,
+    ) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    df = episode_to_dataframe(ep)
+
+    # Plot rewards
+    if "reward_actual" in df.columns and "reward_simulated" in df.columns:
+        df["reward_delta"] = df["reward_simulated"] - df["reward_actual"]
+
+        fig, ax = plt.subplots(figsize=(10, 4))
+        ax.plot(df.index, df["reward_delta"], label="Δ Reward (sim - actual)", linewidth=1.5)
+        ax.axhline(0.0, color="black", linestyle=":", linewidth=1.0)
+
+        ax.set_title(f"{ep.geo_id} – Reward difference over time")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Reward Δ")
+        ax.grid(True, linestyle=":", alpha=0.4)
+        ax.legend(loc="best")
+
+        fig.autofmt_xdate()
+        out_path = output_dir / f"{ep.geo_id}_reward_diff.png"
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=200)
+        plt.close(fig)
+
+    # Plot outcomes
+    md = AnalysisConfig.metadata
+    all_outcomes = md.outcome_columns
+
+    # Default to a small, interpretable subset
+    if focus_columns is None:
+        focus_candidates = ["ConfirmedCases", "ConfirmedDeaths"]
+        focus_columns = [c for c in focus_candidates if c in all_outcomes]
+
+    for col in focus_columns:
+        true_col = f"{col}_true"
+        pred_col = f"{col}_pred"
+        if true_col not in df.columns or pred_col not in df.columns:
+            continue
+
+        diff = df[pred_col] - df[true_col]
+
+        fig, ax = plt.subplots(figsize=(10, 4))
+        ax.plot(df.index, diff, label=f"Δ {col} (sim - actual)", linewidth=1.5)
+        ax.axhline(0.0, color="black", linestyle=":", linewidth=1.0)
+
+        ax.set_title(f"{ep.geo_id} – {col} difference over time")
+        ax.set_xlabel("Date")
+        ax.set_ylabel(f"{col} Δ")
+        ax.grid(True, linestyle=":", alpha=0.4)
+        ax.legend(loc="best")
+
+        fig.autofmt_xdate()
+        out_path = output_dir / f"{ep.geo_id}_{col}_diff.png"
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=200)
+        plt.close(fig)
+
 
 def plot_reward(ep: EpisodeResult, output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)

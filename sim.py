@@ -9,7 +9,7 @@ from analysis.config import AnalysisConfig
 from analysis.oxcgrt_data import OxCGRTData
 from analysis.fwd import ModelForwarder
 from analysis.rl import RLSimulator, RelaxationAgent
-from analysis.rl_eval import plot_outcomes, plot_reward
+from analysis.rl_eval import plot_outcomes, plot_reward, plot_differences
 
 
 def parse_args() -> argparse.Namespace:
@@ -76,6 +76,7 @@ def main() -> None:
         geo_dir = out_dir / geo
         plot_outcomes(ep, output_dir=geo_dir)
         plot_reward(ep, output_dir=geo_dir)
+        plot_differences(ep, output_dir=geo_dir)  # <-- add this
 
         print(f"Plots saved under {geo_dir}")
         print("")
