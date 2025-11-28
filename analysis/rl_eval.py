@@ -49,14 +49,11 @@ def _smooth_series(
 
 def plot_outcomes(
     ep: EpisodeResult,
+    agent_name : str,
     output_dir: Path,
     focus_columns: Optional[List[str]] = None,
     smooth_window: Optional[int] = 7,
 ) -> None:
-    """
-    Plot actual vs predicted for each outcome column (or a subset).
-    Optionally smooth both series with a rolling mean for visualization.
-    """
     output_dir.mkdir(parents=True, exist_ok=True)
     df = episode_to_dataframe(ep)
     md = AnalysisConfig.metadata
@@ -90,7 +87,7 @@ def plot_outcomes(
             linewidth=1.8,
         )
 
-        ax.set_title(f"{ep.geo_id} – {col}: Actual vs Simulated")
+        ax.set_title(f"{ep.geo_id} – {col}: Actual vs Simulated | {agent_name}")
         ax.set_xlabel("Date")
         ax.set_ylabel(col)
         ax.legend(loc="best")
@@ -105,6 +102,7 @@ def plot_outcomes(
 
 def plot_differences(
     ep: EpisodeResult,
+    agent_name : str,
     output_dir: Path,
     focus_columns: Optional[List[str]] = None,
     smooth_window: Optional[int] = 7,
@@ -130,7 +128,7 @@ def plot_differences(
 
         ax.axhline(0.0, color="black", linestyle=":", linewidth=1.0)
 
-        ax.set_title(f"{ep.geo_id} – Reward difference over time")
+        ax.set_title(f"{ep.geo_id} – Reward difference over time (sim - actual) | {agent_name}")
         ax.set_xlabel("Date")
         ax.set_ylabel("Reward Δ")
         ax.grid(True, linestyle=":", alpha=0.4)
@@ -178,7 +176,7 @@ def plot_differences(
 
         ax.axhline(0.0, color="black", linestyle=":", linewidth=1.0)
 
-        ax.set_title(f"{ep.geo_id} – {col} difference over time")
+        ax.set_title(f"{ep.geo_id} – {col} difference over time (sim - actual) | {agent_name}")
         ax.set_xlabel("Date")
         ax.set_ylabel(f"{col} Δ")
         ax.grid(True, linestyle=":", alpha=0.4)
@@ -193,6 +191,7 @@ def plot_differences(
 
 def plot_reward(
     ep: EpisodeResult,
+    agent_name : str,
     output_dir: Path,
     smooth_window: Optional[int] = 7,
 ) -> None:
@@ -230,7 +229,7 @@ def plot_reward(
         linewidth=1.8,
     )
 
-    ax.set_title(f"{ep.geo_id} – Reward over time")
+    ax.set_title(f"{ep.geo_id} – Reward over time | {agent_name}")
     ax.set_xlabel("Date")
     ax.set_ylabel("Reward")
     ax.grid(True, linestyle=":", alpha=0.4)
