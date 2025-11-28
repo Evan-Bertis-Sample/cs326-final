@@ -7,6 +7,7 @@ from typing import Optional, List
 import numpy as np
 import pandas as pd
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -21,7 +22,8 @@ def episode_to_dataframe(ep: EpisodeResult) -> pd.DataFrame:
     dates = [s.date for s in ep.steps]
     y_true = np.stack([s.y_true for s in ep.steps], axis=0)
     y_pred = np.stack([s.y_pred for s in ep.steps], axis=0)
-    rewards = np.array([s.reward for s in ep.steps], dtype=float)
+    reward_actual = np.array([s.reward_actual for s in ep.steps], dtype=float)
+    reward_simulated = np.array([s.reward_simulated for s in ep.steps], dtype=float)
 
     df = pd.DataFrame(index=pd.to_datetime(dates))
     df.index.name = "Date"
@@ -32,7 +34,8 @@ def episode_to_dataframe(ep: EpisodeResult) -> pd.DataFrame:
         if i < y_pred.shape[1]:
             df[f"{col}_pred"] = y_pred[:, i]
 
-    df["reward"] = rewards
+    df["reward_actual"] = reward_actual
+    df["reward_simulated"] = reward_simulated
     return df
 
 
@@ -58,7 +61,9 @@ def plot_outcomes(
 
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(df.index, df[true_col], label="Actual", linewidth=1.5)
-        ax.plot(df.index, df[pred_col], label="Simulated", linestyle="--", linewidth=1.5)
+        ax.plot(
+            df.index, df[pred_col], label="Simulated", linestyle="--", linewidth=1.5
+        )
 
         ax.set_title(f"{ep.geo_id} – {col}: Actual vs Simulated")
         ax.set_xlabel("Date")
@@ -78,7 +83,9 @@ def plot_reward(ep: EpisodeResult, output_dir: Path) -> None:
     df = episode_to_dataframe(ep)
 
     fig, ax = plt.subplots(figsize=(10, 4))
-    ax.plot(df.index, df["reward"], label="Reward", linewidth=1.5)
+    ax.plot(df.index, df["reward_actual"], label="Actual reward", linewidth=1.5)
+    ax.plot(df.index, df["reward_simulated"], label="Simulated reward", linestyle="--", linewidth=1.5)
+
     ax.set_title(f"{ep.geo_id} – Reward over time")
     ax.set_xlabel("Date")
     ax.set_ylabel("Reward")

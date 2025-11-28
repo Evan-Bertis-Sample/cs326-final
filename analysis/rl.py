@@ -21,7 +21,8 @@ class StepResult:
     y_pred: np.ndarray  # shape (O,)
     policy_baseline: np.ndarray  # shape (P,)
     policy_action: np.ndarray  # shape (P,)
-    reward: float
+    reward_actual: float
+    reward_simulated : float
 
 
 @dataclass(frozen=True)
@@ -198,9 +199,14 @@ class RLSimulator:
                     .to_numpy(dtype=float)
                 )
             else:
+                print("No y_true!")
                 y_true = np.full_like(y_pred, np.nan, dtype=float)
 
-            reward = self.reward_fn(y_pred=y_pred, policy_vec=policy_action)
+            reward_sim = self.reward_fn(y_pred=y_pred, policy_vec=policy_action)
+            if np.all(np.isnan(y_true)):
+                reward_actual = np.nan
+            else:
+                reward_actual = self.reward_fn(y_pred=y_true, policy_vec=baseline_policy)
 
             steps.append(
                 StepResult(
@@ -209,7 +215,8 @@ class RLSimulator:
                     y_pred=y_pred,
                     policy_baseline=baseline_policy,
                     policy_action=policy_action,
-                    reward=reward,
+                    reward_simulated=reward_sim,
+                    reward_actual=reward_actual
                 )
             )
 
