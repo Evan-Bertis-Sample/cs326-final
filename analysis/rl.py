@@ -138,6 +138,7 @@ class RLSimulator:
         agent: PolicyAgent,
         start_index: int,
         n_steps: int,
+        verbose : bool = True
     ) -> EpisodeResult:
         predictor, hp = self.forwarder.get_predictor_for_geo(geo_id)
 
@@ -159,7 +160,10 @@ class RLSimulator:
 
         iter = range(start_index, last_index + 1)
     
-        for idx in tqdm(iter, desc="Simulating", unit="day"):
+        if verbose:
+            iter = tqdm(iter, desc="Simulating", unit="day")
+    
+        for idx in iter:
             end_index = idx - 1  # last day in the window
             if end_index < window_size - 1:
                 continue
