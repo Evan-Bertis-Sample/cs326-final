@@ -150,7 +150,7 @@ def main() -> None:
     )
 
     # use Cache to memoize the training run
-    Cache.Begin("RL_Training")
+    Cache.Begin(f"RL_Training_{args.steps}_steps")
     best_agent, history_df = Cache.call(
         trainer.train,
         n_generations=args.generations,
