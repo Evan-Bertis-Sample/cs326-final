@@ -10,6 +10,7 @@ from analysis.oxcgrt_data import OxCGRTData
 from analysis.fwd import ModelForwarder
 from analysis.rl import RLSimulator, RelaxationAgent
 from analysis.rl_eval import plot_outcomes, plot_reward, plot_differences
+from analysis.agents.strict_policy import StrictPolicyAgent
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,12 +39,6 @@ def parse_args() -> argparse.Namespace:
         default="figures/rl",
         help="Directory to store plots.",
     )
-    p.add_argument(
-        "--relax-scale",
-        type=float,
-        default=0.9,
-        help="Relaxation factor for heuristic agent (0.9 = 10%% less strict).",
-    )
     return p.parse_args()
 
 
@@ -61,7 +56,7 @@ def main() -> None:
     forwarder = ModelForwarder(data=data)
     sim = RLSimulator(data=data, forwarder=forwarder)
 
-    agent = RelaxationAgent(scale=args.relax_scale)
+    agent = StrictPolicyAgent(AnalysisConfig.metadata.policy_columns)
     out_dir = Path(args.output_dir)
 
     for geo in args.geos:
