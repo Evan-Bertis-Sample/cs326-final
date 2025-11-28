@@ -51,7 +51,7 @@ class RelaxationAgent(PolicyAgent):
     ) -> np.ndarray:
         # Simple: scale all policy entries down, but not below 0
         new_policy = baseline_policy.astype(float) * self.scale
-        new_policy = np.ones(len(baseline_policy))
+        new_policy = np.clip(new_policy, 0.0, None)
         return new_policy 
 
 
@@ -177,6 +177,14 @@ class RLSimulator:
                 window_df[self.policy_cols]
                 .tail(1)
                 .iloc[0]
+            )
+
+            baseline_policy = (
+                pd.to_numeric(
+                    window_df[self.policy_cols].iloc[-1],
+                    errors="coerce"     # produces NaN for strings like "70-74 yrs"
+                )
+                .fillna(0.0)             # turn all NaNs into 0.0
                 .to_numpy(dtype=float)
             )
 
