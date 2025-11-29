@@ -6,7 +6,8 @@ from typing import Sequence, List, Tuple
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from joblib import Parallel, delayed  # NEW
+from joblib import Parallel, delayed, dump, load
+from pathlib import Path
 
 from analysis.rl import RLSimulator, PolicyAgent
 from analysis.config import AnalysisConfig
@@ -152,6 +153,50 @@ class EvolutionaryPolicyTrainer:
         # Total parameter dimension = n_policies * n_features
         self.param_dim = self.n_policies * self.n_features
 
+    def _save_checkpoint(
+        self,
+        path: Path,
+        generation: int,
+        pop: np.ndarray,
+        fitness: np.ndarray,
+        rng_state: Dict[str, Any],
+        history_rows: List[dict],
+    ) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        dump(
+            {
+                "generation": generation,
+                "pop": pop,
+                "fitness": fitness,
+                "rng_state": rng_state,
+                "history_rows": history_rows,
+                "param_dim": self.param_dim,
+                "n_policies": self.n_policies,
+                "n_features": self.n_features,
+                "policy_columns": self.policy_columns,
+                "outcome_columns": self.outcome_columns,
+            },
+            path,
+        )
+
+    def _load_checkpoint(
+        self,
+        path: Path,
+    ) -> tuple[int, np.ndarray, np.ndarray, Dict[str, Any], List[dict]]:
+        data = load(path)
+        # You can optionally assert compatibility:
+        if data["param_dim"] != self.param_dim:
+            raise ValueError(
+                f"Checkpoint param_dim={data['param_dim']} != current {self.param_dim}"
+            )
+
+        generation = int(data["generation"])
+        pop = np.asarray(data["pop"], dtype=float)
+        fitness = np.asarray(data["fitness"], dtype=float)
+        rng_state = data["rng_state"]
+        history_rows = list(data["history_rows"])
+        return generation, pop, fitness, rng_state, history_rows
+
     def _build_agent(self, flat_params: np.ndarray) -> StateAwareDeltaPolicyAgent:
         flat_params = np.asarray(flat_params, dtype=float)
         if flat_params.shape[0] != self.param_dim:
@@ -216,64 +261,114 @@ class EvolutionaryPolicyTrainer:
         mutation_std: float = 0.5,
         seed: int | None = None,
         verbose: bool = True,
+        checkpoint_path: Path | None = None,
+        resume: bool = True,
+        stop_file: Path | None = None,
     ) -> tuple[PolicyAgent, pd.DataFrame]:
         rng = np.random.default_rng(seed)
 
-        # Population: pop_size x param_dim
-        pop = rng.normal(loc=0.0, scale=init_std, size=(pop_size, self.param_dim))
+        # Initial state
+        history_rows: List[dict] = []
+        start_gen = 0
+
+        if resume and checkpoint_path is not None and checkpoint_path.exists():
+            if verbose:
+                print(f"Resuming from checkpoint: {checkpoint_path}")
+            gen_ckpt, pop, fitness, rng_state, history_rows = self._load_checkpoint(
+                checkpoint_path
+            )
+            start_gen = gen_ckpt + 1  # next generation
+            rng.bit_generator.state = rng_state
+        else:
+            # Fresh run
+            pop = rng.normal(loc=0.0, scale=init_std, size=(pop_size, self.param_dim))
+            fitness = np.full(pop_size, np.nan, dtype=float)
+
         n_elite = max(1, int(pop_size * elite_frac))
 
-        history_rows: List[dict] = []
+        try:
+            for gen in range(start_gen, n_generations):
+                # Evaluate each individual
+                for i in tqdm(range(pop_size), desc=f"Gen {gen:03d}", unit="agents"):
+                    fitness[i] = self.evaluate_params(pop[i])
 
-        for gen in range(n_generations):
-            fitness = np.empty(pop_size, dtype=float)
+                # Sort by descending fitness
+                idx = np.argsort(fitness)[::-1]
+                pop = pop[idx]
+                fitness = fitness[idx]
 
-            # Evaluate each individual (this can itself be parallelized if you want)
-            for i in tqdm(range(pop_size), desc=f"Gen {gen:03d}", unit="agents"):
-                fitness[i] = self.evaluate_params(pop[i])
+                best_fit = fitness[0]
+                mean_fit = float(np.mean(fitness))
 
-            # Sort by descending fitness
-            idx = np.argsort(fitness)[::-1]
-            pop = pop[idx]
-            fitness = fitness[idx]
-
-            best_fit = fitness[0]
-            mean_fit = float(np.mean(fitness))
-
-            history_rows.append(
-                {
-                    "generation": gen,
-                    "best_fitness": float(best_fit),
-                    "mean_fitness": mean_fit,
-                }
-            )
-
-            if verbose:
-                print(f"[Gen {gen:03d}] best={best_fit:.4f}, " f"mean={mean_fit:.4f}")
-
-            #  keep top n_elite, refill the rest with mutated copies
-            elites = pop[:n_elite]
-            new_pop = [elites[0]]  # keep the single best unchanged
-
-            while len(new_pop) < pop_size:
-                parent_idx = rng.integers(low=0, high=n_elite)
-                parent = elites[parent_idx]
-                child = parent + rng.normal(
-                    loc=0.0,
-                    scale=mutation_std,
-                    size=self.param_dim,
+                history_rows.append(
+                    {
+                        "generation": gen,
+                        "best_fitness": float(best_fit),
+                        "mean_fitness": mean_fit,
+                    }
                 )
-                new_pop.append(child)
 
-            pop = np.stack(new_pop, axis=0)
+                if verbose:
+                    print(
+                        f"[Gen {gen:03d}] best={best_fit:.4f}, " f"mean={mean_fit:.4f}"
+                    )
 
-        # Final evaluation to pick best individual
+                # Save checkpoint at the *end* of this generation
+                if checkpoint_path is not None:
+                    rng_state = rng.bit_generator.state
+                    self._save_checkpoint(
+                        checkpoint_path,
+                        generation=gen,
+                        pop=pop,
+                        fitness=fitness,
+                        rng_state=rng_state,
+                        history_rows=history_rows,
+                    )
+
+                # Early stop via "stop file"
+                if stop_file is not None and stop_file.exists():
+                    if verbose:
+                        print(f"Stop file detected at {stop_file}, stopping early.")
+                    break
+
+                # Elitism: keep top n_elite, refill the rest with mutated copies
+                elites = pop[:n_elite]
+                new_pop = [elites[0]]  # keep the single best unchanged
+
+                while len(new_pop) < pop_size:
+                    parent_idx = rng.integers(low=0, high=n_elite)
+                    parent = elites[parent_idx]
+                    child = parent + rng.normal(
+                        loc=0.0,
+                        scale=mutation_std,
+                        size=self.param_dim,
+                    )
+                    new_pop.append(child)
+
+                pop = np.stack(new_pop, axis=0)
+
+        except KeyboardInterrupt:
+            if verbose:
+                print("\nKeyboardInterrupt received — stopping training early.")
+                if checkpoint_path is not None:
+                    rng_state = rng.bit_generator.state
+                    # Save a final checkpoint with the current state
+                    self._save_checkpoint(
+                        checkpoint_path,
+                        generation=gen,
+                        pop=pop,
+                        fitness=fitness,
+                        rng_state=rng_state,
+                        history_rows=history_rows,
+                    )
+
+        # Final evaluation to pick best individual from current pop
         final_fitness = np.array([self.evaluate_params(p) for p in pop], dtype=float)
         best_idx = int(np.argmax(final_fitness))
         best_params = pop[best_idx]
 
         if verbose:
-            print("Training complete.")
+            print("Training complete (possibly early).")
             print(f"Best fitness: {final_fitness[best_idx]:.4f}")
 
         history_df = pd.DataFrame(history_rows)
