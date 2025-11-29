@@ -6,7 +6,7 @@ from analysis.oxcgrt_data import OxCGRTData
 from analysis.fwd import ModelForwarder
 from analysis.rl import RLSimulator
 from analysis.agents.evolutionary import EvolutionaryPolicyTrainer
-from analysis.rl_eval import plot_outcomes, plot_reward, plot_differences
+from analysis.rl_eval import plot_outcomes, plot_reward, plot_differences, plot_policy_decisions
 from analysis.policy_levels import get_strictest_action_for_columns
 
 import numpy as np
@@ -89,6 +89,7 @@ def main() -> None:
         plot_outcomes(ep, agent_name, output_dir=geo_dir)
         plot_reward(ep, agent_name, output_dir=geo_dir)
         plot_differences(ep, agent_name, output_dir=geo_dir)
+        plot_policy_decisions(ep, AnalysisConfig.metadata.policy_columns, agent_name, geo_dir)
 
 
 if __name__ == "__main__":

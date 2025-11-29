@@ -272,13 +272,28 @@ class EvolutionaryPolicyTrainer:
         start_gen = 0
 
         if resume and checkpoint_path is not None and checkpoint_path.exists():
-            if verbose:
-                print(f"Resuming from checkpoint: {checkpoint_path}")
+            print(f"Resuming from checkpoint: {checkpoint_path}")
             gen_ckpt, pop, fitness, rng_state, history_rows = self._load_checkpoint(
                 checkpoint_path
             )
+            print(f"Finished loading from checkpoint")
+
             start_gen = gen_ckpt + 1  # next generation
             rng.bit_generator.state = rng_state
+
+            if start_gen > n_generations:
+                best_idx = int(np.argmax(fitness))
+                best_deltas = pop[best_idx]
+
+                print(f"Loaded checkpoint at generation {gen_ckpt}")
+                print(f"Best fitness from checkpoint: {fitness[best_idx]:.4f}")
+                print(f"Best deltas: {best_deltas}")
+
+                history_df = pd.DataFrame(history_rows)
+                best_agent = self._build_agent(best_deltas)
+                return best_agent, history_df
+
+
         else:
             # Fresh run
             pop = rng.normal(loc=0.0, scale=init_std, size=(pop_size, self.param_dim))

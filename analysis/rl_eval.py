@@ -240,3 +240,51 @@ def plot_reward(
     fig.tight_layout()
     fig.savefig(out_path, dpi=200)
     plt.close(fig)
+
+def plot_policy_decisions(
+    ep: EpisodeResult,
+    policy_columns: List[str],
+    agent_name: str,
+    output_dir: Path,
+) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    dates = [s.date for s in ep.steps]
+    baseline = np.stack([s.policy_baseline for s in ep.steps], axis=0)
+    actions = np.stack([s.policy_action for s in ep.steps], axis=0)
+
+    # Build a DataFrame indexed by date for easier plotting
+    df = pd.DataFrame(index=pd.to_datetime(dates))
+    df.index.name = "Date"
+
+    for i, col in enumerate(policy_columns):
+        if i >= baseline.shape[1] or i >= actions.shape[1]:
+            continue
+
+        base_col = f"{col}_baseline"
+        act_col = f"{col}_action"
+
+        df[base_col] = baseline[:, i]
+        df[act_col] = actions[:, i]
+
+        fig, ax = plt.subplots(figsize=(10, 4))
+        ax.plot(df.index, df[base_col], label="Baseline", linewidth=1.5)
+        ax.plot(
+            df.index,
+            df[act_col],
+            label=f"{agent_name} policy",
+            linestyle="--",
+            linewidth=1.5,
+        )
+
+        ax.set_title(f"{ep.geo_id} – {col}: Baseline vs {agent_name}")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Policy level")
+        ax.grid(True, linestyle=":", alpha=0.4)
+        ax.legend(loc="best")
+
+        fig.autofmt_xdate()
+        out_path = output_dir / f"{ep.geo_id}_{agent_name}_{col}_policy.png"
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=200)
+        plt.close(fig)
