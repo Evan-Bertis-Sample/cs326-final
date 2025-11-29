@@ -53,7 +53,7 @@ def main() -> None:
         n_steps=args.steps,
         policy_columns=policy_cols,
         max_levels=max_levels,
-        n_jobs=1,
+        n_jobs=4,
     )
 
     checkpoint_path = Path(cfg.paths.output) / "agents" / f"{('_'.join(args.geos))}_start{args.start_index}_steps{args.steps}_gen{args.generations}.joblib"
