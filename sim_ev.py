@@ -34,7 +34,7 @@ def main() -> None:
     forwarder = ModelForwarder(data=data)
     sim = RLSimulator(data=data, forwarder=forwarder)
 
-    out_dir = Path(args.output_dir) / "evolutionary"
+    out_dir = Path(args.output_dir) / f"evolutionary/{args.start_index}_to_{args.start_index + args.steps}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     policy_cols = list(cfg.metadata.policy_columns)
@@ -85,7 +85,7 @@ def main() -> None:
             n_steps=args.steps,
         )
         geo_dir = out_dir / geo
-        agent_name = "Evolutionary"
+        agent_name = f"evolutionary_{args.start_index}_to_{args.start_index + args.steps}"
         plot_outcomes(ep, agent_name, output_dir=geo_dir)
         plot_reward(ep, agent_name, output_dir=geo_dir)
         plot_differences(ep, agent_name, output_dir=geo_dir)
