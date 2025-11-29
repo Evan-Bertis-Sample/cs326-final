@@ -1,250 +1,742 @@
 {
-  "NGA": {
+  "AZE": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "GHA": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "KEN": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "UGA": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "ETH": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "ZMB": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "ZWE": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "MWI": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
   "BGD": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "PAK": {
+  "BHS": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "AFG": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "NPL": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "KHM": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "MMR": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "LAO": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "VEN": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
   "BOL": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "ECU": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "DOM": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "EGY": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "SDN": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "SEN": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "TGO": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "MAR": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "TUN": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_f4a2cd8b4c.joblib"
-  },
-  "USA": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "MEX": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
   "BRA": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "ARG": {
+  "BRB": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "CHL": {
+  "BTN": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "COL": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "PER": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "URY": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "ZAF": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "IND": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "THA": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "MYS": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "PHL": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "IDN": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "TUR": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "POL": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "CZE": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "HUN": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "RUS": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_b08c57b638.joblib"
-  },
-  "AUS": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
-  },
-  "NZL": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
-  },
-  "KOR": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
-  },
-  "JPN": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
-  },
-  "SGP": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
-  },
-  "TWN": {
-    "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
   "CAN": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "GBR": {
+  "CHL": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "DEU": {
+  "CHN": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "FRA": {
+  "COL": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "CUB": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "GIN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "GTM": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "GUY": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "HND": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "IDN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "IND": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "IRN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "IRQ": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
   "ITA": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "ESP": {
+  "LBN": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "IRL": {
+  "LKA": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "NOR": {
+  "MEX": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "SWE": {
+  "MMR": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
   },
-  "FIN": {
+  "MYS": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "NPL": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "PAK": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "PAN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "PER": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "PHL": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "RKS": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "SUR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "UGA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "USA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "VEN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "VNM": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "ZWE": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_cf1d347fd0.joblib"
+  },
+  "ABW": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "AND": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "BEN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "BFA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "BWA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "CAF": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "CIV": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "CMR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "DJI": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "GMB": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "HRV": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "HUN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "LUX": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "MAC": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "MLI": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "MLT": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "MRT": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "MUS": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "NER": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "NZL": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "SEN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "SOM": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "TCD": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "TJK": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "TWN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "UZB": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "ZMB": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_1ebda0e5d0.joblib"
+  },
+  "BDI": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "BLR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "CHE": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
   },
   "DNK": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "EST": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "FIN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "FRO": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "GRL": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
   },
   "ISL": {
     "model_name": "linear_window_ridge",
-    "model_file": "models/linear_window_ridge/linear_window_ridge_607529500b.joblib"
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "JPN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "KIR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "LIE": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "LTU": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "NIC": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "NOR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "SDN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "SLB": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "SMR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "SWE": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "TZA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "URY": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "VUT": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "YEM": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_2a3ce7212c.joblib"
+  },
+  "AGO": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "ALB": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "ARG": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "BEL": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "BMU": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "COD": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "COG": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "CYP": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "DZA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "ERI": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "ESP": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "FJI": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "GAB": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "GEO": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "GRC": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "HTI": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "JAM": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "JOR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "KEN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "LSO": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "MAR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "MCO": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "MDG": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "MOZ": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "MWI": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "NAM": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "NGA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "PNG": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "PRY": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "PSE": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "RWA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "SGP": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "SRB": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "SSD": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "SWZ": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "TGO": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "TLS": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "TON": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "TUN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "TUR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "ZAF": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_a693f02dbc.joblib"
+  },
+  "AFG": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "ARE": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "AUS": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "AUT": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "BGR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "BHR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "BIH": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "BLZ": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "BRN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "CPV": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "CRI": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "CZE": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "DEU": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "DMA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "DOM": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "ECU": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "EGY": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "ETH": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "FRA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "GBR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "GHA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "GUM": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "HKG": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "IRL": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "ISR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "KAZ": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "KGZ": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "KHM": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "KOR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "KWT": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "LAO": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "LBR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "LBY": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "LVA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "MDA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "MNG": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "NLD": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "OMN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "POL": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "PRI": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "PRT": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "QAT": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "ROU": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "RUS": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "SAU": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "SLE": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "SLV": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "SVK": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "SVN": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "SYC": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "SYR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "THA": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "TKM": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "TTO": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "UKR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
+  },
+  "VIR": {
+    "model_name": "linear_window_ridge",
+    "model_file": "models/linear_window_ridge/linear_window_ridge_4f15dac8ed.joblib"
   }
 }

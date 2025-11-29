@@ -64,9 +64,6 @@ def plot_policy_decisions(
     agent_name: str,
     output_dir: Path,
 ) -> None:
-    """
-    Plot the baseline vs agent policy levels over time for each policy column.
-    """
     output_dir.mkdir(parents=True, exist_ok=True)
 
     dates = [s.date for s in ep.steps]

@@ -1,0 +1,9 @@
+{
+  "l2": 0.01,
+  "use_meta": false,
+  "filter_type": "boxcar",
+  "filter_alpha": 0.2,
+  "filter_window": 3,
+  "geo_max": 400,
+  "window_size": 8
+}
