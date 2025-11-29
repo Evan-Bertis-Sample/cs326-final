@@ -265,6 +265,8 @@ class EvolutionaryPolicyTrainer:
         resume: bool = True,
         stop_file: Path | None = None,
     ) -> tuple[PolicyAgent, pd.DataFrame]:
+        print("Beginning training...")
+
         rng = np.random.default_rng(seed)
 
         # Initial state
@@ -281,7 +283,7 @@ class EvolutionaryPolicyTrainer:
             start_gen = gen_ckpt + 1  # next generation
             rng.bit_generator.state = rng_state
 
-            if start_gen > n_generations:
+            if start_gen >= n_generations:
                 best_idx = int(np.argmax(fitness))
                 best_deltas = pop[best_idx]
 

@@ -11,8 +11,9 @@ from analysis.config import AnalysisConfig
 from analysis.oxcgrt_data import OxCGRTData
 from analysis.fwd import ModelForwarder
 from analysis.rl import RLSimulator, RelaxationAgent
-from analysis.rl_eval import plot_outcomes, plot_reward, plot_differences
+from analysis.rl_eval import plot_outcomes, plot_reward, plot_differences, plot_policy_decisions
 from analysis.agents.strict_policy import StrictPolicyAgent
+from analysis.agents.lax_policy import LaxPolicyAgent
 
 
 def parse_args() -> argparse.Namespace:
@@ -51,6 +52,7 @@ def build_agents() -> Dict[str, Any]:
 
     agents: Dict[str, Any] = {
         "strict": StrictPolicyAgent(policy_cols),
+        "lax" : LaxPolicyAgent(policy_cols),
         "relax_0.9": RelaxationAgent(scale=0.9),
         "relax_0.8": RelaxationAgent(scale=0.8),
     }
@@ -127,10 +129,11 @@ def main() -> None:
                 n_steps=args.steps,
             )
 
-            geo_dir = agent_dir / geo
+            geo_dir = agent_dir / f"{args.start_index}_to_{args.start_index + args.steps}" / geo
             plot_outcomes(ep, agent_name, output_dir=geo_dir)
             plot_reward(ep, agent_name, output_dir=geo_dir)
             plot_differences(ep, agent_name, output_dir=geo_dir)
+            plot_policy_decisions(ep, cfg.metadata.policy_columns, agent_name, geo_dir)
 
             # Collect stats for this (agent, geo) pair
             stats_row = compute_episode_stats(agent_name, ep)

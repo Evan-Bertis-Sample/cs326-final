@@ -221,6 +221,9 @@ STRICTEST_LEVEL: Dict[str, int] = {
     pid: max(scale.levels.keys()) for pid, scale in POLICY_SCALES.items()
 }
 
+LAXEST_LEVEL : Dict[str, int] = {
+    pid : min(scale.levels.keys()) for pid, scale in POLICY_SCALES.items()
+}
 
 def get_strictest_action_for_columns(columns: list[str]) -> dict[str, int]:
     action: dict[str, int] = {}
@@ -230,4 +233,14 @@ def get_strictest_action_for_columns(columns: list[str]) -> dict[str, int]:
             continue
         max_level = STRICTEST_LEVEL[pid]
         action[col] = max_level
+    return action
+
+def get_laxest_action_for_columns(columns: list[str]) -> dict[str, int]:
+    action: dict[str, int] = {}
+    for col in columns:
+        pid = COLUMN_TO_POLICY_ID.get(col)
+        if pid is None:
+            continue
+        lax_level = LAXEST_LEVEL[pid]
+        action[col] = lax_level
     return action
